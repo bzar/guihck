@@ -1,9 +1,9 @@
-[submodule "lib/glhck"]
-	path = lib/glhck
-	url = https://github.com/Cloudef/glhck.git
 [submodule "test/lib/glfw"]
 	path = test/lib/glfw
 	url = https://github.com/glfw/glfw
 [submodule "lib/chck"]
 	path = lib/chck
 	url = https://github.com/Cloudef/chck.git
+[submodule "test/lib/glhck"]
+	path = test/lib/glhck
+	url = https://github.com/Cloudef/glhck.git

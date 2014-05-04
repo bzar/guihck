@@ -2,15 +2,13 @@
 #define GUIHCK_H
 
 #include <libguile.h>
-#include "pool.h"
-#include "glhck/glhck.h"
 
 #ifdef __cplusplus
 extern "C"
 #endif
 
-typedef chckPoolIndex guihckElementId;
-typedef chckPoolIndex guihckElementTypeId;
+typedef size_t guihckElementId;
+typedef size_t guihckElementTypeId;
 
 #define GUIHCK_NO_PARENT -1
 

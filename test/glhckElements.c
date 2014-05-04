@@ -1,5 +1,6 @@
 #include "guihck.h"
 #include "glhckElements.h"
+#include "glhck/glhck.h"
 #include "GLFW/glfw3.h"
 
 #include <stdio.h>

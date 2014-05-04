@@ -5,7 +5,6 @@ include("cmake/subproject.cmake")
 
 OPTION(GUIHCK_BUILD_TESTS "Build guihck tests/examples" OFF)
 
-
 set(GLHCK_BUILD_EXAMPLES OFF CACHE BOOL "Skip GLHCK examples")
 
 find_package(PkgConfig REQUIRED)
@@ -16,13 +15,11 @@ add_subdirectory(lib)
 include_directories(
   include
   ${guile-2.0_INCLUDE_DIRS}
-  ${kazmath_SOURCE_DIR}/src
   ${glhck_SOURCE_DIR}/include
   lib/chck/pool
 )
 
 file(GLOB SOURCES src/*.c)
-add_definitions(-DGLHCK_KAZMATH_FLOAT -DUSE_SINGLE_PRECISION)
 
 add_library(guihck
     ${SOURCES}
