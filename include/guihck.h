@@ -9,6 +9,7 @@ extern "C"
 
 typedef size_t guihckElementId;
 typedef size_t guihckElementTypeId;
+typedef size_t guihckMouseAreaId;
 
 #define GUIHCK_NO_PARENT -1
 
@@ -24,6 +25,12 @@ typedef struct guihckElementTypeFunctionMap {
    void (*render)(guihckContext* ctx, guihckElementId id, void* data);
 } guihckElementTypeFunctionMap;
 
+// Mouse area function map
+typedef struct guihckMouseAreaFunctionMap {
+  char (*mouseDown)(guihckContext* ctx, guihckElementId id, void* data, int button, float x, float y);
+  char (*mouseUp)(guihckContext* ctx, guihckElementId id, void* data, int button, float x, float y);
+  char (*mouseMove)(guihckContext* ctx, guihckElementId id, void* data, float sx, float sy, float dx, float dy);
+} guihckMouseAreaFunctionMap;
 
 // Context
 
@@ -31,6 +38,10 @@ guihckContext* guihckContextNew();
 void guihckContextFree(guihckContext* ctx);
 void guihckContextUpdate(guihckContext* ctx);
 void guihckContextRender(guihckContext* ctx);
+
+void guihckContextMouseDown(guihckContext* ctx, float x, float y, int button);
+void guihckContextMouseUp(guihckContext* ctx, float x, float y, int button);
+void guihckContextMouseMove(guihckContext* ctx, float sx, float sy, float dx, float dy);
 
 // Element type
 
@@ -46,6 +57,13 @@ void guihckElementProperty(guihckContext* ctx, guihckElementId elementId, const 
 guihckElementId guihckElementGetParent(guihckContext* ctx, guihckElementId elementId);
 
 void* guihckElementGetData(guihckContext* ctx, guihckElementId elementId);
+
+// Mouse area
+
+guihckMouseAreaId guihckMouseAreaNew(guihckContext* ctx, guihckElementId elementId, guihckMouseAreaFunctionMap functionMap);
+void guihckMouseAreaRemove(guihckContext* ctx, guihckMouseAreaId mouseAreaId);
+void guihckMouseAreaRect(guihckContext* ctx, guihckMouseAreaId mouseAreaId, float x, float y, float width, float height);
+void guihckMouseAreaGetRect(guihckContext* ctx, guihckMouseAreaId mouseAreaId, float* x, float* y, float* width, float* height);
 
 // GUI
 

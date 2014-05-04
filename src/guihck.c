@@ -8,13 +8,6 @@
 #include <assert.h>
 
 // temporary
-typedef struct _guihckIdElementMapping
-{
-  char* id;
-  guihckElementId element;
-} _guihckIdElementMapping;
-
-// temporary
 typedef struct _guihckKeyValueMapping
 {
   char* key;
@@ -23,11 +16,9 @@ typedef struct _guihckKeyValueMapping
 
 typedef struct _guihckContext
 {
-  chckPool* elements;
-  chckIterPool* elementsById; // Should change to trie
-
-  chckPool* elementTypes; // should have trie by name
-
+  chckPool* elements; /* should have trie by name */
+  chckPool* elementTypes;
+  chckPool* mouseAreas;  /* should also have a quadtree for references */
 } _guihckContext;
 
 typedef struct _guihckElementType
@@ -44,9 +35,20 @@ typedef struct _guihckElement
   void* data;
   guihckElementId parent;
   chckIterPool* children;
-  chckIterPool* properties; // Should change to trie
+  chckIterPool* properties; /* Should change to trie */
   char dirty;
 } _guihckElement;
+
+typedef struct _guihckMouseArea
+{
+  guihckElementId elementId;
+  float x;
+  float y;
+  float w;
+  float h;
+  guihckMouseAreaFunctionMap functionMap;
+} _guihckMouseArea;
+
 
 typedef struct _guihckGui
 {
@@ -58,8 +60,8 @@ guihckContext* guihckContextNew()
 {
   guihckContext* ctx = calloc(1, sizeof(guihckContext));
   ctx->elements = chckPoolNew(64, 64, sizeof(guihckElement));
-  ctx->elementsById = chckIterPoolNew(64, 64, sizeof(_guihckIdElementMapping));
   ctx->elementTypes = chckPoolNew(16, 16, sizeof(_guihckElementType));
+  ctx->mouseAreas= chckPoolNew(16, 16, sizeof(_guihckMouseArea));
   return ctx;
 }
 
@@ -72,14 +74,14 @@ void guihckContextFree(guihckContext* ctx)
   {
     _guihckElementType* type = chckPoolGet(ctx->elementTypes, current->type);
     if(type->functionMap.destroy)
-      type->functionMap.destroy(ctx, iter - 1, current->data); // id = iter - 1
+      type->functionMap.destroy(ctx, iter - 1, current->data); /* id = iter - 1 */
     chckIterPoolFree(current->children);
     chckIterPoolFree(current->properties);
     free(current->data);
   }
 
   chckPoolFree(ctx->elements);
-  chckIterPoolFree(ctx->elementsById);
+  chckPoolFree(ctx->mouseAreas);
   free(ctx);
 }
 
@@ -94,7 +96,7 @@ void guihckContextUpdate(guihckContext* ctx)
       _guihckElementType* type = chckPoolGet(ctx->elementTypes, current->type);
       assert(type && "Invalid element type");
       if(type->functionMap.update)
-        current->dirty = type->functionMap.update(ctx, iter - 1, current->data); // id = iterator - 1
+        current->dirty = type->functionMap.update(ctx, iter - 1, current->data); /* id = iterator - 1 */
     }
   }
 }
@@ -108,7 +110,7 @@ void guihckContextRender(guihckContext* ctx)
   {
     _guihckElementType* type = chckPoolGet(ctx->elementTypes, current->type);
     if(type->functionMap.render)
-      type->functionMap.render(ctx, iter - 1, current->data); // id = iterator - 1
+      type->functionMap.render(ctx, iter - 1, current->data); /* id = iterator - 1 */
   }
 }
 
@@ -169,7 +171,7 @@ void guihckElementRemove(guihckContext* ctx, guihckElementId elementId)
   if(element->data)
     free(element->data);
 
-  chckIterPool* children = element->children; // element may be invalidated while removing children
+  chckIterPool* children = element->children; /* element may be invalidated while removing children  */
   chckPoolIndex iter = 0;
   guihckElementId* current;
   while ((current = chckIterPoolIter(children, &iter)))
@@ -304,7 +306,7 @@ void guihckGuiCreateElement(guihckGui* gui, const char* typeName)
   {
     if(strcmp(type->name, typeName) == 0)
     {
-      typeId -= 1; // id = iterator value - 1
+      typeId -= 1; /* id = iterator value - 1 */
       break;
     }
   }
@@ -347,3 +349,101 @@ void guihckGuiElementProperty(guihckGui* gui, const char* key, SCM value)
 
 
 
+static char pointInRect(float x, float y, float rx, float ry, float rw, float rh)
+{
+  return x >= rx && x <= rx + rw && y >= ry && y <= ry + rh;
+}
+
+void guihckContextMouseDown(guihckContext* ctx, float x, float y, int button)
+{
+  /* Should be replaced by querying a quad tree*/
+  guihckMouseAreaId mouseAreaIter = 0;
+  _guihckMouseArea* mouseArea  = NULL;
+  while (mouseArea = chckPoolIter(ctx->mouseAreas, &mouseAreaIter))
+  {
+    if(mouseArea->functionMap.mouseDown
+       && pointInRect(x, y, mouseArea->x, mouseArea->y, mouseArea->w, mouseArea->h))
+    {
+      mouseArea->functionMap.mouseDown(ctx, mouseArea->elementId, guihckElementGetData(ctx, mouseArea->elementId), button, x, y);
+    }
+  }
+}
+
+
+void guihckContextMouseUp(guihckContext* ctx, float x, float y, int button)
+{
+  /* Should be replaced by querying a quad tree*/
+  guihckMouseAreaId mouseAreaIter = 0;
+  _guihckMouseArea* mouseArea  = NULL;
+  while (mouseArea = chckPoolIter(ctx->mouseAreas, &mouseAreaIter))
+  {
+    if(mouseArea->functionMap.mouseUp
+       && pointInRect(x, y, mouseArea->x, mouseArea->y, mouseArea->w, mouseArea->h))
+    {
+      mouseArea->functionMap.mouseUp(ctx, mouseArea->elementId, guihckElementGetData(ctx, mouseArea->elementId), button, x, y);
+    }
+  }
+}
+
+
+void guihckContextMouseMove(guihckContext* ctx, float sx, float sy, float dx, float dy)
+{
+  /* Should be replaced by querying the segment from a quad tree*/
+  guihckMouseAreaId mouseAreaIter = 0;
+  _guihckMouseArea* mouseArea  = NULL;
+  while (mouseArea = chckPoolIter(ctx->mouseAreas, &mouseAreaIter))
+  {
+    if(mouseArea->functionMap.mouseMove
+       && pointInRect(dx, dy, mouseArea->x, mouseArea->y, mouseArea->w, mouseArea->h))
+    {
+      mouseArea->functionMap.mouseMove(ctx, mouseArea->elementId, guihckElementGetData(ctx, mouseArea->elementId), sx, sy, dx, dy);
+    }
+  }
+}
+
+
+guihckMouseAreaId guihckMouseAreaNew(guihckContext* ctx, guihckElementId elementId, guihckMouseAreaFunctionMap functionMap)
+{
+  _guihckMouseArea mouseArea;
+  mouseArea.elementId = elementId;
+  mouseArea.x = 0;
+  mouseArea.y = 0;
+  mouseArea.w = 0;
+  mouseArea.x = 0;
+  mouseArea.functionMap = functionMap;
+  guihckMouseAreaId id;
+  chckPoolAdd(ctx->mouseAreas, &mouseArea, &id);
+  return id;
+}
+
+
+void guihckMouseAreaRemove(guihckContext* ctx, guihckMouseAreaId mouseAreaId)
+{
+  chckPoolRemove(ctx->mouseAreas, mouseAreaId);
+}
+
+
+void guihckMouseAreaRect(guihckContext* ctx, guihckMouseAreaId mouseAreaId, float x, float y, float width, float height)
+{
+  _guihckMouseArea* mouseArea = (_guihckMouseArea*) chckPoolGet(ctx->mouseAreas, mouseAreaId);
+  if(mouseArea)
+  {
+    mouseArea->x = x;
+    mouseArea->y = y;
+    mouseArea->w = width;
+    mouseArea->h = height;
+  }
+}
+
+
+void guihckMouseAreaGetRect(guihckContext* ctx, guihckMouseAreaId mouseAreaId, float* x, float* y, float* width, float* height)
+{
+  _guihckMouseArea* mouseArea = (_guihckMouseArea*) chckPoolGet(ctx->mouseAreas, mouseAreaId);
+  if(mouseArea)
+  {
+    if(x) *x = mouseArea->x;
+    if(y) *y = mouseArea->y;
+    if(width) *width = mouseArea->w;
+    if(height) *height = mouseArea->h;
+  }
+}

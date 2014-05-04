@@ -45,13 +45,13 @@
                y 400
                width 25
                height 25)
-    (rectangle '(x 10
-                 y 10
+    (rectangle '(x 410
+                 y 410
                  width 10
                  height 10
                  color (255 0 0)))
-    (rectangle '(x 15
-                 y 15
+    (rectangle '(x 415
+                 y 415
                  width 10
                  height 10
                  color (0 255 0))))

@@ -30,12 +30,12 @@ void initRectangle(guihckContext* ctx, guihckElementId id, void* data)
   glhckObjectMaterial(o, m);
   glhckMaterialFree(m);
 
-  guihckElementId parentId = guihckElementGetParent(ctx, id);
+/*  guihckElementId parentId = guihckElementGetParent(ctx, id);
   if(parentId != GUIHCK_NO_PARENT)
   {
     glhckObject* parent = *((glhckObject**) guihckElementGetData(ctx, parentId));
     glhckObjectAddChild(parent, o);
-  }
+  }*/
   *((glhckObject**) data) = o;
 }
 
@@ -55,10 +55,10 @@ char updateRectangle(guihckContext* ctx, guihckElementId id, void* data)
 
   kmVec3 position = *glhckObjectGetPosition(o);
   kmVec3 scale = *glhckObjectGetScale(o);
-  if(scm_to_bool(scm_real_p(x))) position.x = scm_to_double(x);
-  if(scm_to_bool(scm_real_p(y))) position.y = scm_to_double(y);
-  if(scm_to_bool(scm_real_p(w))) scale.x = scm_to_double(w);
-  if(scm_to_bool(scm_real_p(h))) scale.y = scm_to_double(h);
+  if(scm_to_bool(scm_real_p(w))) scale.x = scm_to_double(w)/2;
+  if(scm_to_bool(scm_real_p(h))) scale.y = scm_to_double(h)/2;
+  if(scm_to_bool(scm_real_p(x))) position.x = scm_to_double(x) + scale.x;
+  if(scm_to_bool(scm_real_p(y))) position.y = scm_to_double(y) + scale.y;
 
   glhckObjectPosition(o, &position);
   glhckObjectScale(o, &scale);
