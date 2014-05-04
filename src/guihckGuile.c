@@ -17,14 +17,14 @@ typedef struct _guihckGuileContext
 } _guihckGuileContext;
 
 /* Thread-local storage for guile context */
-_GUIHCK_TLS _guihckGuileContext* globalContext;
+static _GUIHCK_TLS _guihckGuileContext* threadLocalContext;
 
 static SCM guileCreateElement(SCM typeSymbol)
 {
   if(scm_symbol_p(typeSymbol))
   {
     char* typeName = scm_to_utf8_string(scm_symbol_to_string(typeSymbol));
-    guihckGuiCreateElement(globalContext->gui, typeName);
+    guihckGuiCreateElement(threadLocalContext->gui, typeName);
     return SCM_BOOL_T;
   }
   else
@@ -38,7 +38,7 @@ static SCM guileSetElementProperty(SCM keySymbol, SCM value)
   if(scm_symbol_p(keySymbol))
   {
     char* key = scm_to_utf8_string(scm_symbol_to_string(keySymbol));
-    guihckGuiElementProperty(globalContext->gui, key, value);
+    guihckGuiElementProperty(threadLocalContext->gui, key, value);
     return SCM_BOOL_T;
   }
   else
@@ -52,7 +52,7 @@ static SCM guileGetElementProperty(SCM keySymbol)
   if(scm_symbol_p(keySymbol))
   {
     char* key = scm_to_utf8_string(scm_symbol_to_string(keySymbol));
-    return guihckGuiGetElementProperty(globalContext->gui, key);
+    return guihckGuiGetElementProperty(threadLocalContext->gui, key);
   }
   else
   {
@@ -62,14 +62,14 @@ static SCM guileGetElementProperty(SCM keySymbol)
 
 static SCM guilePopElement()
 {
-  guihckGuiPopElement(globalContext->gui);
+  guihckGuiPopElement(threadLocalContext->gui);
   return SCM_BOOL_T;
 }
 
 static void* runInGuile(void* data)
 {
   _guihckGuileContext* ctx = data;
-  globalContext = ctx;
+  threadLocalContext = ctx;
   scm_c_define_gsubr("create-element!", 1, 0, 0, guileCreateElement);
   scm_c_define_gsubr("pop-element!", 0, 0, 0, guilePopElement);
   scm_c_define_gsubr("set-element-property!", 2, 0, 0, guileSetElementProperty);
