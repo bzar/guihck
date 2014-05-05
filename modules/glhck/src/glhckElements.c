@@ -4,7 +4,7 @@
 
 static void initRectangle(guihckContext* ctx, guihckElementId id, void* data);
 static void destroyRectangle(guihckContext* ctx, guihckElementId id, void* data);
-static char updateRectangle(guihckContext* ctx, guihckElementId id, void* data);
+static bool updateRectangle(guihckContext* ctx, guihckElementId id, void* data);
 static void renderRectangle(guihckContext* ctx, guihckElementId id, void* data);
 
 void guihckGlhckAddAllTypes(guihckContext* ctx)
@@ -44,7 +44,7 @@ void destroyRectangle(guihckContext* ctx, guihckElementId id, void* data)
   glhckObjectFree(*((glhckObject**) data));
 }
 
-char updateRectangle(guihckContext* ctx, guihckElementId id, void* data)
+bool updateRectangle(guihckContext* ctx, guihckElementId id, void* data)
 {
   glhckObject* o = *((glhckObject**) data);
   SCM x = guihckElementGetProperty(ctx, id, "x");
@@ -77,7 +77,7 @@ char updateRectangle(guihckContext* ctx, guihckElementId id, void* data)
     glhckMaterialDiffuse(glhckObjectGetMaterial(o), &color);
   }
 
-  return 0;
+  return false;
 }
 
 void renderRectangle(guihckContext* ctx, guihckElementId id, void* data)

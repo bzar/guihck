@@ -3,10 +3,10 @@
 
 static void initMouseArea(guihckContext* ctx, guihckElementId id, void* data);
 static void destroyMouseArea(guihckContext* ctx, guihckElementId id, void* data);
-static char updateMouseArea(guihckContext* ctx, guihckElementId id, void* data);
-static char mouseAreaMouseDown(guihckContext* ctx, guihckElementId id, void* data, int button, float x, float y);
-static char mouseAreaMouseUp(guihckContext* ctx, guihckElementId id, void* data, int button, float x, float y);
-static char mouseAreaMouseMove(guihckContext* ctx, guihckElementId id, void* data, float sx, float sy, float dx, float dy);
+static bool updateMouseArea(guihckContext* ctx, guihckElementId id, void* data);
+static bool mouseAreaMouseDown(guihckContext* ctx, guihckElementId id, void* data, int button, float x, float y);
+static bool mouseAreaMouseUp(guihckContext* ctx, guihckElementId id, void* data, int button, float x, float y);
+static bool mouseAreaMouseMove(guihckContext* ctx, guihckElementId id, void* data, float sx, float sy, float dx, float dy);
 
 void guihckElementsAddAllTypes(guihckContext* ctx)
 {
@@ -40,7 +40,7 @@ void destroyMouseArea(guihckContext* ctx, guihckElementId id, void* data)
   guihckMouseAreaRemove(ctx, *((guihckMouseAreaId*) data));
 }
 
-char updateMouseArea(guihckContext* ctx, guihckElementId id, void* data)
+bool updateMouseArea(guihckContext* ctx, guihckElementId id, void* data)
 {
   SCM x = guihckElementGetProperty(ctx, id, "x");
   SCM y = guihckElementGetProperty(ctx, id, "y");
@@ -68,22 +68,22 @@ char updateMouseArea(guihckContext* ctx, guihckElementId id, void* data)
 
   guihckMouseAreaRect(ctx, *((guihckMouseAreaId*) data), px, py, ph, pw);
 
-  return 0;
+  return false;
 }
-char mouseAreaMouseDown(guihckContext* ctx, guihckElementId id, void* data, int button, float x, float y)
+bool mouseAreaMouseDown(guihckContext* ctx, guihckElementId id, void* data, int button, float x, float y)
 {
   printf("mouseAreaMouseDown %d %d %f %f\n", id, button, x, y);
-  return 0;
+  return false;
 }
 
-char mouseAreaMouseUp(guihckContext* ctx, guihckElementId id, void* data, int button, float x, float y)
+bool mouseAreaMouseUp(guihckContext* ctx, guihckElementId id, void* data, int button, float x, float y)
 {
   printf("mouseAreaMouseUp %d %d %f %f\n", id, button, x, y);
-  return 0;
+  return false;
 }
 
-char mouseAreaMouseMove(guihckContext* ctx, guihckElementId id, void* data, float sx, float sy, float dx, float dy)
+bool mouseAreaMouseMove(guihckContext* ctx, guihckElementId id, void* data, float sx, float sy, float dx, float dy)
 {
   printf("mouseAreaMouseMove %d %f %f %f %f\n", id, sx, sy, dx, dy);
-  return 0;
+  return false;
 }

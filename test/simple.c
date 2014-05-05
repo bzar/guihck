@@ -10,10 +10,10 @@ void destroyFoo(guihckContext* ctx, guihckElementId id, void* data)
 {
   printf("Destroy foo %d\n", id);
 }
-char updateFoo(guihckContext* ctx, guihckElementId id, void* data)
+bool updateFoo(guihckContext* ctx, guihckElementId id, void* data)
 {
   printf("Updating foo %d\n", id);
-  return 1;
+  return true;
 }
 
 void renderFoo(guihckContext* ctx, guihckElementId id, void* data)

@@ -36,7 +36,7 @@ typedef struct _guihckElement
   guihckElementId parent;
   chckIterPool* children;
   chckIterPool* properties; /* Should change to trie */
-  char dirty;
+  bool dirty;
 } _guihckElement;
 
 typedef struct _guihckMouseArea
@@ -144,7 +144,7 @@ guihckElementId guihckElementNew(guihckContext* ctx, guihckElementTypeId typeId,
   element.parent = parentId;
   element.children = chckIterPoolNew(8, 8, sizeof(guihckElementId));
   element.properties = chckIterPoolNew(8, 8, sizeof(_guihckKeyValueMapping));
-  element.dirty = 1;
+  element.dirty = true;
 
   guihckElementId id = -1;
   chckPoolAdd(ctx->elements, &element, &id);
@@ -211,7 +211,7 @@ void guihckElementProperty(guihckContext* ctx, guihckElementId elementId, const 
       if(!scm_equal_p(current->value, value))
       {
         current->value = value;
-        element->dirty = 1;
+        element->dirty = true;
       }
       return;
     }

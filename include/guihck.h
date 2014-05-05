@@ -2,6 +2,7 @@
 #define GUIHCK_H
 
 #include <libguile.h>
+#include <stdbool.h>
 
 #ifdef __cplusplus
 extern "C"
@@ -21,15 +22,15 @@ typedef struct _guihckElement guihckElement;
 typedef struct guihckElementTypeFunctionMap {
    void (*init)(guihckContext* ctx, guihckElementId id, void* data);
    void (*destroy)(guihckContext* ctx, guihckElementId id, void* data);
-   char (*update)(guihckContext* ctx, guihckElementId id, void* data);
+   bool (*update)(guihckContext* ctx, guihckElementId id, void* data);
    void (*render)(guihckContext* ctx, guihckElementId id, void* data);
 } guihckElementTypeFunctionMap;
 
 // Mouse area function map
 typedef struct guihckMouseAreaFunctionMap {
-  char (*mouseDown)(guihckContext* ctx, guihckElementId id, void* data, int button, float x, float y);
-  char (*mouseUp)(guihckContext* ctx, guihckElementId id, void* data, int button, float x, float y);
-  char (*mouseMove)(guihckContext* ctx, guihckElementId id, void* data, float sx, float sy, float dx, float dy);
+  bool (*mouseDown)(guihckContext* ctx, guihckElementId id, void* data, int button, float x, float y);
+  bool (*mouseUp)(guihckContext* ctx, guihckElementId id, void* data, int button, float x, float y);
+  bool (*mouseMove)(guihckContext* ctx, guihckElementId id, void* data, float sx, float sy, float dx, float dy);
 } guihckMouseAreaFunctionMap;
 
 // Context
