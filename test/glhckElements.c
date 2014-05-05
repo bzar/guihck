@@ -49,29 +49,29 @@ int main(int argc, char** argv)
 
   glhckRenderClearColorb(128, 128, 128, 255);
 
-  guihckGui* gui = guihckGuiNew();
-  guihckGlhckAddAllTypes(guihckGuiGetContext(gui));
+  guihckContext* ctx = guihckContextNew();
+  guihckGlhckAddAllTypes(ctx);
 
-  guihckGuiCreateElement(gui, "rectangle");
-  guihckGuiElementProperty(gui, "x", scm_from_double(200.0));
-  guihckGuiElementProperty(gui, "y", scm_from_double(100.0));
-  guihckGuiElementProperty(gui, "width", scm_from_double(50.0));
-  guihckGuiElementProperty(gui, "height", scm_from_double(75.0));
-  guihckGuiElementProperty(gui, "color", scm_list_3(scm_from_uint8(128), scm_from_uint8(52), scm_from_uint8(200)));
-  guihckGuiPopElement(gui);
+  guihckContextCreateElement(ctx, "rectangle");
+  guihckContextElementProperty(ctx, "x", scm_from_double(200.0));
+  guihckContextElementProperty(ctx, "y", scm_from_double(100.0));
+  guihckContextElementProperty(ctx, "width", scm_from_double(50.0));
+  guihckContextElementProperty(ctx, "height", scm_from_double(75.0));
+  guihckContextElementProperty(ctx, "color", scm_list_3(scm_from_uint8(128), scm_from_uint8(52), scm_from_uint8(200)));
+  guihckContextPopElement(ctx);
 
   while(RUNNING)
   {
     glfwPollEvents();
-    guihckGuiUpdate(gui);
+    guihckContextUpdate(ctx);
 
     glhckRenderClear(GLHCK_DEPTH_BUFFER_BIT | GLHCK_COLOR_BUFFER_BIT);
-    guihckGuiRender(gui);
+    guihckContextRender(ctx);
     glhckRender();
     glfwSwapBuffers(window);
   }
 
-  guihckGuiFree(gui);
+  guihckContextFree(ctx);
 
   return EXIT_SUCCESS;
 }

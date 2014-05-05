@@ -42,10 +42,10 @@ int main(int argc, char** argv)
 
   glhckRenderClearColorb(128, 128, 128, 255);
 
-  guihckGui* gui = guihckGuiNew();
-  guihckElementsAddAllTypes(guihckGuiGetContext(gui));
-  guihckGlhckAddAllTypes(guihckGuiGetContext(gui));
-  guihckGuiExecuteScriptFile(gui, "scm/mouseArea.scm");
+  guihckContext* ctx = guihckContextNew();
+  guihckElementsAddAllTypes(ctx);
+  guihckGlhckAddAllTypes(ctx);
+  guihckContextExecuteScriptFile(ctx, "scm/mouseArea.scm");
 
   glfwhckEventQueue* queue = glfwhckEventQueueNew(window, GLFWHCK_EVENTS_ALL);
 
@@ -74,17 +74,17 @@ int main(int argc, char** argv)
         {
           if(event->mouseButton.action == GLFW_PRESS)
           {
-            guihckContextMouseDown(guihckGuiGetContext(gui), mx, my, event->mouseButton.button);
+            guihckContextMouseDown(ctx, mx, my, event->mouseButton.button);
           }
           else if(event->mouseButton.action == GLFW_RELEASE)
           {
-            guihckContextMouseUp(guihckGuiGetContext(gui), mx, my, event->mouseButton.button);
+            guihckContextMouseUp(ctx, mx, my, event->mouseButton.button);
           }
           break;
         }
         case GLFWHCK_EVENT_MOUSE_POSITION:
         {
-          guihckContextMouseMove(guihckGuiGetContext(gui), mx, my, event->mousePosition.x, event->mousePosition.y);
+          guihckContextMouseMove(ctx, mx, my, event->mousePosition.x, event->mousePosition.y);
           mx = event->mousePosition.x;
           my = event->mousePosition.y;
           break;
@@ -96,16 +96,16 @@ int main(int argc, char** argv)
       }
     }
 
-    guihckGuiUpdate(gui);
+    guihckContextUpdate(ctx);
 
     glhckRenderClear(GLHCK_DEPTH_BUFFER_BIT | GLHCK_COLOR_BUFFER_BIT);
-    guihckGuiRender(gui);
+    guihckContextRender(ctx);
     glhckRender();
     glfwSwapBuffers(window);
   }
 
   glfwhckEventQueueFree(queue);
-  guihckGuiFree(gui);
+  guihckContextFree(ctx);
 
   return EXIT_SUCCESS;
 }

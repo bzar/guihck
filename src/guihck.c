@@ -19,6 +19,7 @@ typedef struct _guihckContext
   chckPool* elements; /* should have trie by name */
   chckPool* elementTypes;
   chckPool* mouseAreas;  /* should also have a quadtree for references */
+  chckIterPool* stack;
 } _guihckContext;
 
 typedef struct _guihckElementType
@@ -48,19 +49,13 @@ typedef struct _guihckMouseArea
   guihckMouseAreaFunctionMap functionMap;
 } _guihckMouseArea;
 
-
-typedef struct _guihckGui
-{
-  guihckContext* ctx;
-  chckIterPool* stack;
-} _guihckGui;
-
 guihckContext* guihckContextNew()
 {
   guihckContext* ctx = calloc(1, sizeof(guihckContext));
   ctx->elements = chckPoolNew(64, 64, sizeof(guihckElement));
   ctx->elementTypes = chckPoolNew(16, 16, sizeof(_guihckElementType));
-  ctx->mouseAreas= chckPoolNew(16, 16, sizeof(_guihckMouseArea));
+  ctx->mouseAreas = chckPoolNew(16, 16, sizeof(_guihckMouseArea));
+  ctx->stack = chckIterPoolNew(16, 16, sizeof(guihckElementId));
   return ctx;
 }
 
@@ -235,43 +230,12 @@ void* guihckElementGetData(guihckContext* ctx, guihckElementId elementId)
   return element->data;
 }
 
-guihckGui* guihckGuiNew()
+void guihckContextExecuteScript(guihckContext* ctx, const char* script)
 {
-  guihckGui* gui = calloc(1, sizeof(guihckGui));
-  gui->ctx = guihckContextNew();
-  gui->stack = chckIterPoolNew(8, 8, sizeof(guihckElementId));
-  return gui;
+  guihckContextRunGuile(ctx, script);
 }
 
-
-void guihckGuiFree(guihckGui* gui)
-{
-  guihckContextFree(gui->ctx);
-  chckIterPoolFree(gui->stack);
-  free(gui);
-}
-
-guihckContext*guihckGuiGetContext(guihckGui* gui)
-{
-  return gui->ctx;
-}
-
-void guihckGuiUpdate(guihckGui* gui)
-{
-  guihckContextUpdate(gui->ctx);
-}
-
-void guihckGuiRender(guihckGui* gui)
-{
-  guihckContextRender(gui->ctx);
-}
-
-void guihckGuiExecuteScript(guihckGui* gui, const char* script)
-{
-  guihckGuiRunGuile(gui, script);
-}
-
-void guihckGuiExecuteScriptFile(guihckGui* gui, const char* path)
+void guihckContextExecuteScriptFile(guihckContext* ctx, const char* path)
 {
   FILE* file;
 
@@ -285,22 +249,22 @@ void guihckGuiExecuteScriptFile(guihckGui* gui, const char* path)
     fread(contents, pos, 1, file);
     fclose(file);
 
-    guihckGuiExecuteScript(gui, contents);
+    guihckContextExecuteScript(ctx, contents);
     free(contents);
   }
 }
 
-void guihckGuiCreateElement(guihckGui* gui, const char* typeName)
+void guihckContextCreateElement(guihckContext* ctx, const char* typeName)
 {
   guihckElementId parentId = GUIHCK_NO_PARENT;
-  if(chckIterPoolCount(gui->stack) > 0)
+  if(chckIterPoolCount(ctx->stack) > 0)
   {
-    parentId = *((guihckElementId*) chckIterPoolGetLast(gui->stack));
+    parentId = *((guihckElementId*) chckIterPoolGetLast(ctx->stack));
   }
 
   guihckElementTypeId typeId = 0;
   _guihckElementType* type  = NULL;
-  while (type = chckPoolIter(gui->ctx->elementTypes, &typeId))
+  while (type = chckPoolIter(ctx->elementTypes, &typeId))
   {
     if(strcmp(type->name, typeName) == 0)
     {
@@ -311,34 +275,34 @@ void guihckGuiCreateElement(guihckGui* gui, const char* typeName)
 
   assert(type && "Element type not found");
 
-  guihckElementId id = guihckElementNew(gui->ctx, typeId, parentId);
-  chckIterPoolAdd(gui->stack, &id, NULL);
+  guihckElementId id = guihckElementNew(ctx, typeId, parentId);
+  chckIterPoolAdd(ctx->stack, &id, NULL);
 }
 
 
-void guihckGuiPopElement(guihckGui* gui)
+void guihckContextPopElement(guihckContext* ctx)
 {
-  size_t size = chckIterPoolCount(gui->stack);
+  size_t size = chckIterPoolCount(ctx->stack);
   assert(size > 0 && "Element stack is empty");
-  chckIterPoolRemove(gui->stack, size - 1);
+  chckIterPoolRemove(ctx->stack, size - 1);
 }
 
 
-SCM guihckGuiGetElementProperty(guihckGui* gui, const char* key)
+SCM guihckContextGetElementProperty(guihckContext* ctx, const char* key)
 {
-  guihckElementId* id = chckIterPoolGetLast(gui->stack);
+  guihckElementId* id = chckIterPoolGetLast(ctx->stack);
   assert(id && "Element stack is empty");
 
-  return guihckElementGetProperty(gui->ctx, *id,  key);
+  return guihckElementGetProperty(ctx, *id,  key);
 }
 
 
-void guihckGuiElementProperty(guihckGui* gui, const char* key, SCM value)
+void guihckContextElementProperty(guihckContext* ctx, const char* key, SCM value)
 {
-  guihckElementId* id = chckIterPoolGetLast(gui->stack);
+  guihckElementId* id = chckIterPoolGetLast(ctx->stack);
   assert(id && "Element stack is empty");
 
-  return guihckElementProperty(gui->ctx, *id,  key, value);
+  return guihckElementProperty(ctx, *id,  key, value);
 }
 
 

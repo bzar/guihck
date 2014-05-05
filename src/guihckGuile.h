@@ -3,6 +3,6 @@
 
 #include "guihck.h"
 
-SCM guihckGuiRunGuile(guihckGui* gui, const char* script);
+SCM guihckContextRunGuile(guihckContext* ctx, const char* script);
 
 #endif

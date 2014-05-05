@@ -14,7 +14,6 @@ typedef size_t guihckMouseAreaId;
 
 #define GUIHCK_NO_PARENT -1
 
-typedef struct _guihckGui guihckGui;
 typedef struct _guihckContext guihckContext;
 typedef struct _guihckElement guihckElement;
 
@@ -66,24 +65,15 @@ void guihckMouseAreaRemove(guihckContext* ctx, guihckMouseAreaId mouseAreaId);
 void guihckMouseAreaRect(guihckContext* ctx, guihckMouseAreaId mouseAreaId, float x, float y, float width, float height);
 void guihckMouseAreaGetRect(guihckContext* ctx, guihckMouseAreaId mouseAreaId, float* x, float* y, float* width, float* height);
 
-// GUI
 
-guihckGui* guihckGuiNew();
-void guihckGuiFree(guihckGui* gui);
-
-guihckContext* guihckGuiGetContext(guihckGui* gui);
-
-void guihckGuiUpdate(guihckGui* gui);
-void guihckGuiRender(guihckGui* gui);
-
-void guihckGuiExecuteScript(guihckGui* gui, const char* script);
-void guihckGuiExecuteScriptFile(guihckGui* gui, const char* path);
+void guihckContextExecuteScript(guihckContext* ctx, const char* script);
+void guihckContextExecuteScriptFile(guihckContext* ctx, const char* path);
 
 // Element stack operations
-void guihckGuiCreateElement(guihckGui* gui, const char* typeName);
-void guihckGuiPopElement(guihckGui* gui);
-SCM guihckGuiGetElementProperty(guihckGui* gui, const char *key);
-void guihckGuiElementProperty(guihckGui* gui, const char* key, SCM value);
+void guihckContextCreateElement(guihckContext* ctx, const char* typeName);
+void guihckContextPopElement(guihckContext* ctx);
+SCM guihckContextGetElementProperty(guihckContext* ctx, const char *key);
+void guihckContextElementProperty(guihckContext* ctx, const char* key, SCM value);
 
 #ifdef __cplusplus
 }

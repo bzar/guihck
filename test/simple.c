@@ -33,14 +33,14 @@ int main(int argc, char** argv)
   guihckContextRender(ctx);
   guihckContextFree(ctx);
 
-  // Trivial test for gui
-  guihckGui* gui = guihckGuiNew();
-  guihckElementTypeAdd(guihckGuiGetContext(gui), "foo", fooMap, 0);
-  guihckGuiCreateElement(gui, "foo");
-  guihckGuiPopElement(gui);
-  guihckGuiUpdate(gui);
-  guihckGuiRender(gui);
-  guihckGuiFree(gui);
+  // Trivial test for stack operations
+  guihckContext* ctx2 = guihckContextNew();
+  guihckElementTypeAdd(ctx2, "foo", fooMap, 0);
+  guihckContextCreateElement(ctx2, "foo");
+  guihckContextPopElement(ctx2);
+  guihckContextUpdate(ctx2);
+  guihckContextRender(ctx2);
+  guihckContextFree(ctx2);
 
   return EXIT_SUCCESS;
 }

@@ -49,22 +49,22 @@ int main(int argc, char** argv)
 
   glhckRenderClearColorb(128, 128, 128, 255);
 
-  guihckGui* gui = guihckGuiNew();
-  guihckGlhckAddAllTypes(guihckGuiGetContext(gui));
-  guihckGuiExecuteScriptFile(gui, "scm/script.scm");
+  guihckContext* ctx = guihckContextNew();
+  guihckGlhckAddAllTypes(ctx);
+  guihckContextExecuteScriptFile(ctx, "scm/script.scm");
 
   while(RUNNING)
   {
     glfwPollEvents();
-    guihckGuiUpdate(gui);
+    guihckContextUpdate(ctx);
 
     glhckRenderClear(GLHCK_DEPTH_BUFFER_BIT | GLHCK_COLOR_BUFFER_BIT);
-    guihckGuiRender(gui);
+    guihckContextRender(ctx);
     glhckRender();
     glfwSwapBuffers(window);
   }
 
-  guihckGuiFree(gui);
+  guihckContextFree(ctx);
 
   return EXIT_SUCCESS;
 }

@@ -10,21 +10,21 @@
 # warning "No Thread-local storage! Multi-threaded guihck applications may have unexpected behaviour!"
 #endif
 
-typedef struct _guihckGuileContext
+typedef struct _guihckContextleContext
 {
-  guihckGui* gui;
+  guihckContext* ctx;
   const char* script;
-} _guihckGuileContext;
+} _guihckContextleContext;
 
 /* Thread-local storage for guile context */
-static _GUIHCK_TLS _guihckGuileContext* threadLocalContext;
+static _GUIHCK_TLS _guihckContextleContext* threadLocalContext;
 
 static SCM guileCreateElement(SCM typeSymbol)
 {
   if(scm_symbol_p(typeSymbol))
   {
     char* typeName = scm_to_utf8_string(scm_symbol_to_string(typeSymbol));
-    guihckGuiCreateElement(threadLocalContext->gui, typeName);
+    guihckContextCreateElement(threadLocalContext->ctx, typeName);
     return SCM_BOOL_T;
   }
   else
@@ -38,7 +38,7 @@ static SCM guileSetElementProperty(SCM keySymbol, SCM value)
   if(scm_symbol_p(keySymbol))
   {
     char* key = scm_to_utf8_string(scm_symbol_to_string(keySymbol));
-    guihckGuiElementProperty(threadLocalContext->gui, key, value);
+    guihckContextElementProperty(threadLocalContext->ctx, key, value);
     return SCM_BOOL_T;
   }
   else
@@ -52,7 +52,7 @@ static SCM guileGetElementProperty(SCM keySymbol)
   if(scm_symbol_p(keySymbol))
   {
     char* key = scm_to_utf8_string(scm_symbol_to_string(keySymbol));
-    return guihckGuiGetElementProperty(threadLocalContext->gui, key);
+    return guihckContextGetElementProperty(threadLocalContext->ctx, key);
   }
   else
   {
@@ -62,13 +62,13 @@ static SCM guileGetElementProperty(SCM keySymbol)
 
 static SCM guilePopElement()
 {
-  guihckGuiPopElement(threadLocalContext->gui);
+  guihckContextPopElement(threadLocalContext->ctx);
   return SCM_BOOL_T;
 }
 
 static void* runInGuile(void* data)
 {
-  _guihckGuileContext* ctx = data;
+  _guihckContextleContext* ctx = data;
   threadLocalContext = ctx;
   scm_c_define_gsubr("create-element!", 1, 0, 0, guileCreateElement);
   scm_c_define_gsubr("pop-element!", 0, 0, 0, guilePopElement);
@@ -79,10 +79,10 @@ static void* runInGuile(void* data)
   return result;
 }
 
-SCM guihckGuiRunGuile(guihckGui* gui, const char* script)
+SCM guihckContextRunGuile(guihckContext* ctx, const char* script)
 {
-  _guihckGuileContext ctx;
-  ctx.gui = gui;
-  ctx.script = script;
-  return (SCM) scm_with_guile(runInGuile, &ctx);
+  _guihckContextleContext context;
+  context.ctx = ctx;
+  context.script = script;
+  return (SCM) scm_with_guile(runInGuile, &context);
 }
