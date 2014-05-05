@@ -30,7 +30,6 @@ typedef struct _guihckElementType
 
 typedef struct _guihckElement
 {
-  guihckContext* ctx;
   guihckElementTypeId type;
   void* data;
   guihckElementId parent;
@@ -139,7 +138,6 @@ guihckElementId guihckElementNew(guihckContext* ctx, guihckElementTypeId typeId,
   _guihckElementType* type = chckPoolGet(ctx->elementTypes, typeId);
   guihckElement element;
   element.type = typeId;
-  element.ctx = ctx;
   element.data = type->dataSize > 0 ? calloc(1, type->dataSize) : NULL;
   element.parent = parentId;
   element.children = chckIterPoolNew(8, 8, sizeof(guihckElementId));
