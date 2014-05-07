@@ -10,21 +10,20 @@
 # warning "No Thread-local storage! Multi-threaded guihck applications may have unexpected behaviour!"
 #endif
 
-typedef struct _guihckContextleContext
+typedef struct _guihckGuileContext
 {
   guihckContext* ctx;
-  const char* script;
-} _guihckContextleContext;
+} _guihckGuileContext;
 
 /* Thread-local storage for guile context */
-static _GUIHCK_TLS _guihckContextleContext* threadLocalContext;
+static _GUIHCK_TLS _guihckGuileContext threadLocalContext;
 
 static SCM guileCreateElement(SCM typeSymbol)
 {
   if(scm_symbol_p(typeSymbol))
   {
     char* typeName = scm_to_utf8_string(scm_symbol_to_string(typeSymbol));
-    guihckContextCreateElement(threadLocalContext->ctx, typeName);
+    guihckContextCreateElement(threadLocalContext.ctx, typeName);
     return SCM_BOOL_T;
   }
   else
@@ -38,7 +37,7 @@ static SCM guileSetElementProperty(SCM keySymbol, SCM value)
   if(scm_symbol_p(keySymbol))
   {
     char* key = scm_to_utf8_string(scm_symbol_to_string(keySymbol));
-    guihckContextElementProperty(threadLocalContext->ctx, key, value);
+    guihckContextElementProperty(threadLocalContext.ctx, key, value);
     return SCM_BOOL_T;
   }
   else
@@ -52,7 +51,7 @@ static SCM guileGetElementProperty(SCM keySymbol)
   if(scm_symbol_p(keySymbol))
   {
     char* key = scm_to_utf8_string(scm_symbol_to_string(keySymbol));
-    return guihckContextGetElementProperty(threadLocalContext->ctx, key);
+    return guihckContextGetElementProperty(threadLocalContext.ctx, key);
   }
   else
   {
@@ -62,27 +61,46 @@ static SCM guileGetElementProperty(SCM keySymbol)
 
 static SCM guilePopElement()
 {
-  guihckContextPopElement(threadLocalContext->ctx);
+  guihckContextPopElement(threadLocalContext.ctx);
   return SCM_BOOL_T;
 }
 
-static void* runInGuile(void* data)
+static void registerApi()
 {
-  _guihckContextleContext* ctx = data;
-  threadLocalContext = ctx;
   scm_c_define_gsubr("create-element!", 1, 0, 0, guileCreateElement);
   scm_c_define_gsubr("pop-element!", 0, 0, 0, guilePopElement);
   scm_c_define_gsubr("set-element-property!", 2, 0, 0, guileSetElementProperty);
   scm_c_define_gsubr("get-element-property!", 1, 0, 0, guileGetElementProperty);
-  SCM exp = scm_from_utf8_string(ctx->script);
-  SCM result = scm_eval_string(exp);
+}
+
+static void* runStringInGuile(void* data)
+{
+  registerApi();
+  return scm_c_eval_string((*(const char**) data));
+}
+
+static void* runExpressionInGuile(void* data)
+{
+  SCM expression = data;
+  scm_gc_protect_object(expression);
+  SCM result = scm_primitive_eval(expression);
+  scm_gc_unprotect_object(expression);
   return result;
 }
 
 SCM guihckContextRunGuile(guihckContext* ctx, const char* script)
 {
-  _guihckContextleContext context;
-  context.ctx = ctx;
-  context.script = script;
-  return (SCM) scm_with_guile(runInGuile, &context);
+  threadLocalContext.ctx = ctx;
+  SCM result = scm_with_guile(runStringInGuile, &script);
+  threadLocalContext.ctx = NULL;
+  return result;
+}
+
+
+SCM guihckContextRunGuileExpression(guihckContext* ctx, SCM expression)
+{
+  threadLocalContext.ctx = ctx;
+  SCM result = scm_with_guile(runExpressionInGuile, expression);
+  threadLocalContext.ctx = NULL;
+  return result;
 }

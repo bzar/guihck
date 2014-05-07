@@ -203,6 +203,8 @@ void guihckElementProperty(guihckContext* ctx, guihckElementId elementId, const 
     {
       if(!scm_equal_p(current->value, value))
       {
+        scm_gc_protect_object(value);
+        scm_gc_unprotect_object(current->value);
         current->value = value;
         element->dirty = true;
       }
@@ -228,6 +230,11 @@ void* guihckElementGetData(guihckContext* ctx, guihckElementId elementId)
 {
   guihckElement* element = chckPoolGet(ctx->elements, elementId);
   return element->data;
+}
+
+void guihckContextExecuteExpression(guihckContext* ctx, SCM expression)
+{
+  guihckContextRunGuileExpression(ctx, expression);
 }
 
 void guihckContextExecuteScript(guihckContext* ctx, const char* script)
@@ -279,6 +286,10 @@ void guihckContextCreateElement(guihckContext* ctx, const char* typeName)
   chckIterPoolAdd(ctx->stack, &id, NULL);
 }
 
+void guihckContextPushElement(guihckContext* ctx, guihckElementId elementId)
+{
+  chckIterPoolAdd(ctx->stack, &elementId, NULL);
+}
 
 void guihckContextPopElement(guihckContext* ctx)
 {
@@ -409,3 +420,4 @@ void guihckMouseAreaGetRect(guihckContext* ctx, guihckMouseAreaId mouseAreaId, f
     if(height) *height = mouseArea->h;
   }
 }
+

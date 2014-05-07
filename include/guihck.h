@@ -66,11 +66,13 @@ void guihckMouseAreaRect(guihckContext* ctx, guihckMouseAreaId mouseAreaId, floa
 void guihckMouseAreaGetRect(guihckContext* ctx, guihckMouseAreaId mouseAreaId, float* x, float* y, float* width, float* height);
 
 
+void guihckContextExecuteExpression(guihckContext* ctx, SCM expression);
 void guihckContextExecuteScript(guihckContext* ctx, const char* script);
 void guihckContextExecuteScriptFile(guihckContext* ctx, const char* path);
 
 // Element stack operations
 void guihckContextCreateElement(guihckContext* ctx, const char* typeName);
+void guihckContextPushElement(guihckContext* ctx, guihckElementId elementId);
 void guihckContextPopElement(guihckContext* ctx);
 SCM guihckContextGetElementProperty(guihckContext* ctx, const char *key);
 void guihckContextElementProperty(guihckContext* ctx, const char* key, SCM value);

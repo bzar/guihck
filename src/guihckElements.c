@@ -72,18 +72,36 @@ bool updateMouseArea(guihckContext* ctx, guihckElementId id, void* data)
 }
 bool mouseAreaMouseDown(guihckContext* ctx, guihckElementId id, void* data, int button, float x, float y)
 {
-  printf("mouseAreaMouseDown %d %d %f %f\n", id, button, x, y);
+  SCM handler = guihckElementGetProperty(ctx, id, "onMouseDown");
+  if(scm_to_bool(scm_list_p(handler)))
+  {
+   guihckContextPushElement(ctx, id);
+   guihckContextExecuteExpression(ctx, handler);
+   guihckContextPopElement(ctx);
+  }
   return false;
 }
 
 bool mouseAreaMouseUp(guihckContext* ctx, guihckElementId id, void* data, int button, float x, float y)
 {
-  printf("mouseAreaMouseUp %d %d %f %f\n", id, button, x, y);
+  SCM handler = guihckElementGetProperty(ctx, id, "onMouseUp");
+  if(scm_to_bool(scm_list_p(handler)))
+  {
+   guihckContextPushElement(ctx, id);
+   guihckContextExecuteExpression(ctx, handler);
+   guihckContextPopElement(ctx);
+  }
   return false;
 }
 
 bool mouseAreaMouseMove(guihckContext* ctx, guihckElementId id, void* data, float sx, float sy, float dx, float dy)
 {
-  printf("mouseAreaMouseMove %d %f %f %f %f\n", id, sx, sy, dx, dy);
+  SCM handler = guihckElementGetProperty(ctx, id, "onMouseMove");
+  if(scm_to_bool(scm_list_p(handler)))
+  {
+   guihckContextPushElement(ctx, id);
+   guihckContextExecuteExpression(ctx, handler);
+   guihckContextPopElement(ctx);
+  }
   return false;
 }
