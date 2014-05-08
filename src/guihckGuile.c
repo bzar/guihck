@@ -27,6 +27,25 @@ typedef struct _functionDefinition
 /* Thread-local storage for guile context */
 static _GUIHCK_TLS _guihckGuileContext threadLocalContext;
 
+static const char INITIAL_SCM[] =
+    ""
+    "(define (create-elements . elements)"
+    "  (map (lambda (e) (e)) elements))"
+    ""
+    "(define (create-element-with-properties type props . children)"
+    "  (define (set-properties! props)"
+    "    (if (null? props) '() (begin"
+    "      (set-element-property! (car props) (cadr props))"
+    "      (set-properties! (cddr props)))))"
+    ""
+    "  (lambda ()"
+    "    (begin"
+    "      (create-element! type)"
+    "      (set-properties! props)"
+    "      (map (lambda (c) (c)) children)"
+    "      (pop-element!))))";
+
+
 static void* initGuile(void*);
 static void* registerFunction(void*);
 static void* runStringInGuile(void* data);
@@ -72,6 +91,8 @@ void* initGuile(void* data)
   scm_c_define_gsubr("pop-element!", 0, 0, 0, guilePopElement);
   scm_c_define_gsubr("set-element-property!", 2, 0, 0, guileSetElementProperty);
   scm_c_define_gsubr("get-element-property!", 1, 0, 0, guileGetElementProperty);
+
+  scm_c_eval_string(INITIAL_SCM);
 }
 
 void* registerFunction(void* data)

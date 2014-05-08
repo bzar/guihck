@@ -20,26 +20,6 @@
    
 (create-rectangle! 50 50 50 50 '(255 0 255))
 
-
-(define (create-elements . elements)
-  (map (lambda (e) (e)) elements))
-  
-(define (create-element-with-properties type props . children)
-  (define (set-properties! props)
-    (if (null? props) '() (begin
-      (set-element-property! (car props) (cadr props))
-      (set-properties! (cddr props)))))
-    
-  (lambda () 
-    (begin
-      (create-element! type)
-      (set-properties! props)
-      (map (lambda (c) (c)) children)
-      (pop-element!))))
-
-(define (rectangle props . children) 
-  (apply create-element-with-properties (append (list 'rectangle props) children)))
-
 (create-elements 
   (rectangle '(x 400
                y 400

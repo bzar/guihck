@@ -2,6 +2,10 @@
 #include "glhck/glhck.h"
 #include <stdio.h>
 
+static const char GUIHCK_GLHCK_RECTANGLE_SCM[] =
+    "(define (rectangle props . children)"
+    "  (apply create-element-with-properties (append (list 'rectangle props) children)))";
+
 static void initRectangle(guihckContext* ctx, guihckElementId id, void* data);
 static void destroyRectangle(guihckContext* ctx, guihckElementId id, void* data);
 static bool updateRectangle(guihckContext* ctx, guihckElementId id, void* data);
@@ -21,6 +25,7 @@ void guihckGlhckAddRectangleType(guihckContext* ctx)
     renderRectangle
   };
   guihckElementTypeAdd(ctx, "rectangle", functionMap, sizeof(glhckObject*));
+  guihckContextExecuteScript(ctx, GUIHCK_GLHCK_RECTANGLE_SCM);
 }
 
 void initRectangle(guihckContext* ctx, guihckElementId id, void* data)
@@ -30,12 +35,6 @@ void initRectangle(guihckContext* ctx, guihckElementId id, void* data)
   glhckObjectMaterial(o, m);
   glhckMaterialFree(m);
 
-/*  guihckElementId parentId = guihckElementGetParent(ctx, id);
-  if(parentId != GUIHCK_NO_PARENT)
-  {
-    glhckObject* parent = *((glhckObject**) guihckElementGetData(ctx, parentId));
-    glhckObjectAddChild(parent, o);
-  }*/
   *((glhckObject**) data) = o;
 }
 

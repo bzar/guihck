@@ -1,6 +1,10 @@
 #include "guihckElements.h"
 #include <stdio.h>
 
+static const char GUIHCK_MOUSEAREA_SCM[] =
+    "(define (mouse-area props . children)"
+    "  (apply create-element-with-properties (append (list 'mouse-area props) children)))";
+
 static void initMouseArea(guihckContext* ctx, guihckElementId id, void* data);
 static void destroyMouseArea(guihckContext* ctx, guihckElementId id, void* data);
 static bool updateMouseArea(guihckContext* ctx, guihckElementId id, void* data);
@@ -25,6 +29,7 @@ void guihckElementsAddMouseAreaType(guihckContext* ctx)
     NULL
   };
   guihckElementTypeAdd(ctx, "mouse-area", functionMap, sizeof(guihckMouseAreaId));
+  guihckContextExecuteScript(ctx, GUIHCK_MOUSEAREA_SCM);
 }
 
 void initMouseArea(guihckContext* ctx, guihckElementId id, void* data)
@@ -53,20 +58,9 @@ bool updateMouseArea(guihckContext* ctx, guihckElementId id, void* data)
 
   float px, py, pw, ph;
   guihckMouseAreaGetRect(ctx, *((guihckMouseAreaId*) data), &px, &py, &pw, &ph);
-/*
-  float parentX = 0;
-  float parentY = 0;
-  guihckElementId parentId = guihckElementGetParent(ctx, id);
-  if(parentId != GUIHCK_NO_PARENT)
-  {
-    SCM parx =  guihckElementGetProperty(ctx, parentId, "x");
-    SCM pary =  guihckElementGetProperty(ctx, parentId, "y");
-    if(scm_to_bool(scm_real_p(parx))) parentX = scm_to_double(parx);
-    if(scm_to_bool(scm_real_p(pary))) parentY = scm_to_double(pary);
-  }
-*/
-  if(scm_to_bool(scm_real_p(x))) px = scm_to_double(x)/* + parentX*/;
-  if(scm_to_bool(scm_real_p(y))) py = scm_to_double(y)/* + parentY*/;
+
+  if(scm_to_bool(scm_real_p(x))) px = scm_to_double(x);
+  if(scm_to_bool(scm_real_p(y))) py = scm_to_double(y);
   if(scm_to_bool(scm_real_p(w))) pw = scm_to_double(w);
   if(scm_to_bool(scm_real_p(h))) ph = scm_to_double(h);
 
