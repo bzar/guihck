@@ -30,6 +30,8 @@ typedef struct guihckMouseAreaFunctionMap {
   bool (*mouseDown)(guihckContext* ctx, guihckElementId id, void* data, int button, float x, float y);
   bool (*mouseUp)(guihckContext* ctx, guihckElementId id, void* data, int button, float x, float y);
   bool (*mouseMove)(guihckContext* ctx, guihckElementId id, void* data, float sx, float sy, float dx, float dy);
+  bool (*mouseEnter)(guihckContext* ctx, guihckElementId id, void* data, float sx, float sy, float dx, float dy);
+  bool (*mouseExit)(guihckContext* ctx, guihckElementId id, void* data, float sx, float sy, float dx, float dy);
 } guihckMouseAreaFunctionMap;
 
 // Context
@@ -73,6 +75,7 @@ void guihckContextExecuteScriptFile(guihckContext* ctx, const char* path);
 // Element stack operations
 void guihckContextCreateElement(guihckContext* ctx, const char* typeName);
 void guihckContextPushElement(guihckContext* ctx, guihckElementId elementId);
+void guihckContextPushElementById(guihckContext* ctx, const char* id);
 void guihckContextPopElement(guihckContext* ctx);
 SCM guihckContextGetElementProperty(guihckContext* ctx, const char *key);
 void guihckContextElementProperty(guihckContext* ctx, const char* key, SCM value);

@@ -7,6 +7,8 @@ static bool updateMouseArea(guihckContext* ctx, guihckElementId id, void* data);
 static bool mouseAreaMouseDown(guihckContext* ctx, guihckElementId id, void* data, int button, float x, float y);
 static bool mouseAreaMouseUp(guihckContext* ctx, guihckElementId id, void* data, int button, float x, float y);
 static bool mouseAreaMouseMove(guihckContext* ctx, guihckElementId id, void* data, float sx, float sy, float dx, float dy);
+static bool mouseAreaMouseEnter(guihckContext* ctx, guihckElementId id, void* data, float sx, float sy, float dx, float dy);
+static bool mouseAreaMouseExit(guihckContext* ctx, guihckElementId id, void* data, float sx, float sy, float dx, float dy);
 
 void guihckElementsAddAllTypes(guihckContext* ctx)
 {
@@ -30,7 +32,9 @@ void initMouseArea(guihckContext* ctx, guihckElementId id, void* data)
   guihckMouseAreaFunctionMap functionMap = {
     mouseAreaMouseDown,
     mouseAreaMouseUp,
-    mouseAreaMouseMove
+    mouseAreaMouseMove,
+    mouseAreaMouseEnter,
+    mouseAreaMouseExit
   };
   *((guihckMouseAreaId*) data) = guihckMouseAreaNew(ctx, id, functionMap);
 }
@@ -97,6 +101,28 @@ bool mouseAreaMouseUp(guihckContext* ctx, guihckElementId id, void* data, int bu
 bool mouseAreaMouseMove(guihckContext* ctx, guihckElementId id, void* data, float sx, float sy, float dx, float dy)
 {
   SCM handler = guihckElementGetProperty(ctx, id, "onMouseMove");
+  if(scm_to_bool(scm_list_p(handler)))
+  {
+   guihckContextPushElement(ctx, id);
+   guihckContextExecuteExpression(ctx, handler);
+   guihckContextPopElement(ctx);
+  }
+  return false;
+}
+bool mouseAreaMouseEnter(guihckContext* ctx, guihckElementId id, void* data, float sx, float sy, float dx, float dy)
+{
+  SCM handler = guihckElementGetProperty(ctx, id, "onMouseEnter");
+  if(scm_to_bool(scm_list_p(handler)))
+  {
+   guihckContextPushElement(ctx, id);
+   guihckContextExecuteExpression(ctx, handler);
+   guihckContextPopElement(ctx);
+  }
+  return false;
+}
+bool mouseAreaMouseExit(guihckContext* ctx, guihckElementId id, void* data, float sx, float sy, float dx, float dy)
+{
+  SCM handler = guihckElementGetProperty(ctx, id, "onMouseExit");
   if(scm_to_bool(scm_list_p(handler)))
   {
    guihckContextPushElement(ctx, id);

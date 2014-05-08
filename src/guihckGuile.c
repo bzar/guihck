@@ -32,6 +32,19 @@ static SCM guileCreateElement(SCM typeSymbol)
   }
 }
 
+static SCM guilePushElement(SCM idSymbol)
+{
+  if(scm_symbol_p(idSymbol))
+  {
+    char* id = scm_to_utf8_string(scm_symbol_to_string(idSymbol));
+    guihckContextPushElementById(threadLocalContext.ctx, id);
+    return SCM_BOOL_T;
+  }
+  else
+  {
+    return SCM_BOOL_F;
+  }
+}
 static SCM guileSetElementProperty(SCM keySymbol, SCM value)
 {
   if(scm_symbol_p(keySymbol))
@@ -68,6 +81,7 @@ static SCM guilePopElement()
 static void registerApi()
 {
   scm_c_define_gsubr("create-element!", 1, 0, 0, guileCreateElement);
+  scm_c_define_gsubr("push-element!", 1, 0, 0, guilePushElement);
   scm_c_define_gsubr("pop-element!", 0, 0, 0, guilePopElement);
   scm_c_define_gsubr("set-element-property!", 2, 0, 0, guileSetElementProperty);
   scm_c_define_gsubr("get-element-property!", 1, 0, 0, guileGetElementProperty);

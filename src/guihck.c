@@ -201,10 +201,8 @@ void guihckElementProperty(guihckContext* ctx, guihckElementId elementId, const 
   {
     if(strcmp(current->key, key) == 0)
     {
-      if(!scm_equal_p(current->value, value))
+      if(scm_is_false(scm_equal_p(current->value, value)))
       {
-        scm_gc_protect_object(value);
-        scm_gc_unprotect_object(current->value);
         current->value = value;
         element->dirty = true;
       }
@@ -217,6 +215,7 @@ void guihckElementProperty(guihckContext* ctx, guihckElementId elementId, const 
   mapping.value = value;
 
   chckIterPoolAdd(element->properties, &mapping, NULL);
+  element->dirty = true;
 }
 
 
@@ -289,6 +288,23 @@ void guihckContextCreateElement(guihckContext* ctx, const char* typeName)
 void guihckContextPushElement(guihckContext* ctx, guihckElementId elementId)
 {
   chckIterPoolAdd(ctx->stack, &elementId, NULL);
+}
+
+void guihckContextPushElementById(guihckContext* ctx, const char* id)
+{
+  chckPoolIndex iter = 0;
+  guihckElementId* current;
+  SCM idstr = scm_string_to_symbol(scm_from_utf8_string(id));
+  while ((current = chckPoolIter(ctx->elements, &iter)))
+  {
+    SCM eid = guihckElementGetProperty(ctx, iter - 1, "id");
+    if(scm_is_true(scm_equal_p(eid, idstr)))
+    {
+      guihckContextPushElement(ctx, iter - 1);
+      return;
+    }
+  }
+  assert(false && "Could not find element with requested id");
 }
 
 void guihckContextPopElement(guihckContext* ctx)
@@ -366,10 +382,26 @@ void guihckContextMouseMove(guihckContext* ctx, float sx, float sy, float dx, fl
   _guihckMouseArea* mouseArea  = NULL;
   while (mouseArea = chckPoolIter(ctx->mouseAreas, &mouseAreaIter))
   {
-    if(mouseArea->functionMap.mouseMove
-       && pointInRect(dx, dy, mouseArea->x, mouseArea->y, mouseArea->w, mouseArea->h))
+    if(!mouseArea->functionMap.mouseMove && !mouseArea->functionMap.mouseEnter && !mouseArea->functionMap.mouseExit)
+      continue;
+
+    bool s = pointInRect(sx, sy, mouseArea->x, mouseArea->y, mouseArea->w, mouseArea->h);
+    bool d = pointInRect(dx, dy, mouseArea->x, mouseArea->y, mouseArea->w, mouseArea->h);
+
+    if(s && d)
     {
-      mouseArea->functionMap.mouseMove(ctx, mouseArea->elementId, guihckElementGetData(ctx, mouseArea->elementId), sx, sy, dx, dy);
+      if(mouseArea->functionMap.mouseMove)
+        mouseArea->functionMap.mouseMove(ctx, mouseArea->elementId, guihckElementGetData(ctx, mouseArea->elementId), sx, sy, dx, dy);
+    }
+    else if(s)
+    {
+      if(mouseArea->functionMap.mouseExit)
+        mouseArea->functionMap.mouseExit(ctx, mouseArea->elementId, guihckElementGetData(ctx, mouseArea->elementId), sx, sy, dx, dy);
+    }
+    else if(d)
+    {
+      if(mouseArea->functionMap.mouseEnter)
+        mouseArea->functionMap.mouseEnter(ctx, mouseArea->elementId, guihckElementGetData(ctx, mouseArea->elementId), sx, sy, dx, dy);
     }
   }
 }
@@ -420,4 +452,6 @@ void guihckMouseAreaGetRect(guihckContext* ctx, guihckMouseAreaId mouseAreaId, f
     if(height) *height = mouseArea->h;
   }
 }
+
+
 
