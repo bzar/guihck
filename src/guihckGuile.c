@@ -15,10 +15,86 @@ typedef struct _guihckGuileContext
   guihckContext* ctx;
 } _guihckGuileContext;
 
+typedef struct _functionDefinition
+{
+  const char* name;
+  int req;
+  int opt;
+  int rst;
+  scm_t_subr func;
+} _functionDefinition;
+
 /* Thread-local storage for guile context */
 static _GUIHCK_TLS _guihckGuileContext threadLocalContext;
 
-static SCM guileCreateElement(SCM typeSymbol)
+static void* initGuile(void*);
+static void* registerFunction(void*);
+static void* runStringInGuile(void* data);
+static void* runExpressionInGuile(void* data);
+static SCM guileCreateElement(SCM typeSymbol);
+static SCM guilePushElement(SCM idSymbol);
+static SCM guileSetElementProperty(SCM keySymbol, SCM value);
+static SCM guileGetElementProperty(SCM keySymbol);
+static SCM guilePopElement();
+
+void guihckGuileInit()
+{
+  scm_with_guile(initGuile, NULL);
+}
+
+void guihckGuileRegisterFunction(const char* name, int req, int opt, int rst, scm_t_subr func)
+{
+  _functionDefinition fd = {name, req, opt, rst, func};
+  scm_with_guile(registerFunction, &fd);
+}
+
+SCM guihckGuileRunScript(guihckContext* ctx, const char* script)
+{
+  threadLocalContext.ctx = ctx;
+  SCM result = scm_with_guile(runStringInGuile, &script);
+  threadLocalContext.ctx = NULL;
+  return result;
+}
+
+
+SCM guihckGuileRunExpression(guihckContext* ctx, SCM expression)
+{
+  threadLocalContext.ctx = ctx;
+  SCM result = scm_with_guile(runExpressionInGuile, expression);
+  threadLocalContext.ctx = NULL;
+  return result;
+}
+
+void* initGuile(void* data)
+{
+  scm_c_define_gsubr("create-element!", 1, 0, 0, guileCreateElement);
+  scm_c_define_gsubr("push-element!", 1, 0, 0, guilePushElement);
+  scm_c_define_gsubr("pop-element!", 0, 0, 0, guilePopElement);
+  scm_c_define_gsubr("set-element-property!", 2, 0, 0, guileSetElementProperty);
+  scm_c_define_gsubr("get-element-property!", 1, 0, 0, guileGetElementProperty);
+}
+
+void* registerFunction(void* data)
+{
+  _functionDefinition* fd = data;
+  return scm_c_define_gsubr(fd->name, fd->req, fd->opt, fd->rst, fd->func);
+}
+
+void* runStringInGuile(void* data)
+{
+  return scm_c_eval_string((*(const char**) data));
+}
+
+void* runExpressionInGuile(void* data)
+{
+  SCM expression = data;
+  scm_gc_protect_object(expression);
+  SCM result = scm_primitive_eval(expression);
+  scm_gc_unprotect_object(expression);
+  return result;
+}
+
+SCM guileCreateElement(SCM typeSymbol)
 {
   if(scm_symbol_p(typeSymbol))
   {
@@ -32,7 +108,7 @@ static SCM guileCreateElement(SCM typeSymbol)
   }
 }
 
-static SCM guilePushElement(SCM idSymbol)
+SCM guilePushElement(SCM idSymbol)
 {
   if(scm_symbol_p(idSymbol))
   {
@@ -45,7 +121,7 @@ static SCM guilePushElement(SCM idSymbol)
     return SCM_BOOL_F;
   }
 }
-static SCM guileSetElementProperty(SCM keySymbol, SCM value)
+SCM guileSetElementProperty(SCM keySymbol, SCM value)
 {
   if(scm_symbol_p(keySymbol))
   {
@@ -59,7 +135,7 @@ static SCM guileSetElementProperty(SCM keySymbol, SCM value)
   }
 }
 
-static SCM guileGetElementProperty(SCM keySymbol)
+SCM guileGetElementProperty(SCM keySymbol)
 {
   if(scm_symbol_p(keySymbol))
   {
@@ -72,49 +148,8 @@ static SCM guileGetElementProperty(SCM keySymbol)
   }
 }
 
-static SCM guilePopElement()
+SCM guilePopElement()
 {
   guihckContextPopElement(threadLocalContext.ctx);
   return SCM_BOOL_T;
-}
-
-static void registerApi()
-{
-  scm_c_define_gsubr("create-element!", 1, 0, 0, guileCreateElement);
-  scm_c_define_gsubr("push-element!", 1, 0, 0, guilePushElement);
-  scm_c_define_gsubr("pop-element!", 0, 0, 0, guilePopElement);
-  scm_c_define_gsubr("set-element-property!", 2, 0, 0, guileSetElementProperty);
-  scm_c_define_gsubr("get-element-property!", 1, 0, 0, guileGetElementProperty);
-}
-
-static void* runStringInGuile(void* data)
-{
-  registerApi();
-  return scm_c_eval_string((*(const char**) data));
-}
-
-static void* runExpressionInGuile(void* data)
-{
-  SCM expression = data;
-  scm_gc_protect_object(expression);
-  SCM result = scm_primitive_eval(expression);
-  scm_gc_unprotect_object(expression);
-  return result;
-}
-
-SCM guihckContextRunGuile(guihckContext* ctx, const char* script)
-{
-  threadLocalContext.ctx = ctx;
-  SCM result = scm_with_guile(runStringInGuile, &script);
-  threadLocalContext.ctx = NULL;
-  return result;
-}
-
-
-SCM guihckContextRunGuileExpression(guihckContext* ctx, SCM expression)
-{
-  threadLocalContext.ctx = ctx;
-  SCM result = scm_with_guile(runExpressionInGuile, expression);
-  threadLocalContext.ctx = NULL;
-  return result;
 }

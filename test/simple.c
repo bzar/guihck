@@ -25,6 +25,7 @@ int main(int argc, char** argv)
 {
   guihckElementTypeFunctionMap fooMap = {initFoo, destroyFoo, updateFoo, renderFoo};
 
+  guihckInit();
   // Trivial test for context
   guihckContext* ctx = guihckContextNew();
   guihckElementTypeId fooId = guihckElementTypeAdd(ctx, "foo", fooMap, 0);

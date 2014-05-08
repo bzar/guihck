@@ -21,7 +21,7 @@ int main(int argc, char** argv)
     return EXIT_FAILURE;
 
   glfwWindowHint(GLFW_DEPTH_BITS, 24);
-  GLFWwindow* window = glfwCreateWindow(WIDTH, HEIGHT, "guihck-glhckElements", NULL, NULL);
+  GLFWwindow* window = glfwCreateWindow(WIDTH, HEIGHT, "guihck-script", NULL, NULL);
 
 
   if(!window)
@@ -49,6 +49,7 @@ int main(int argc, char** argv)
 
   glhckRenderClearColorb(128, 128, 128, 255);
 
+  guihckInit();
   guihckContext* ctx = guihckContextNew();
   guihckGlhckAddAllTypes(ctx);
   guihckContextExecuteScriptFile(ctx, "scm/script.scm");

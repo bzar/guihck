@@ -24,5 +24,8 @@ target_link_libraries(guihck-script guihck glhck glfw ${GLFW_LIBRARIES})
 add_executable(guihck-mouseArea mouseArea.c ../modules/glhck/src/glhckElements.c)
 target_link_libraries(guihck-mouseArea guihck glhck glfw ${GLFW_LIBRARIES} glfwhck)
 
+add_executable(guihck-functions functions.c ../modules/glhck/src/glhckElements.c)
+target_link_libraries(guihck-functions guihck glhck glfw ${GLFW_LIBRARIES} glfwhck)
+
 FILE(COPY scm DESTINATION .)
 

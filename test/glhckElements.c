@@ -49,6 +49,7 @@ int main(int argc, char** argv)
 
   glhckRenderClearColorb(128, 128, 128, 255);
 
+  guihckInit();
   guihckContext* ctx = guihckContextNew();
   guihckGlhckAddAllTypes(ctx);
 

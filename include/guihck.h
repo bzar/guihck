@@ -34,6 +34,10 @@ typedef struct guihckMouseAreaFunctionMap {
   bool (*mouseExit)(guihckContext* ctx, guihckElementId id, void* data, float sx, float sy, float dx, float dy);
 } guihckMouseAreaFunctionMap;
 
+// Init
+void guihckInit();
+void guihckRegisterFunction(const char* name, int req, int opt, int rst, scm_t_subr func);
+
 // Context
 
 guihckContext* guihckContextNew();

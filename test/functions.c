@@ -1,3 +1,4 @@
+
 #include "guihck.h"
 #include "glhckElements.h"
 #include "guihckElements.h"
@@ -10,13 +11,22 @@
 #define WIDTH 800
 #define HEIGHT 480
 
+SCM setClearColor(SCM c)
+{
+  SCM r = scm_list_ref(c, scm_from_int8(0));
+  SCM g = scm_list_ref(c, scm_from_int8(1));
+  SCM b = scm_list_ref(c, scm_from_int8(2));
+  glhckRenderClearColorb(scm_to_uint8(r),scm_to_uint8(g), scm_to_uint8(b), 255);
+  return SCM_BOOL_T;
+}
+
 int main(int argc, char** argv)
 {
   if (!glfwInit())
     return EXIT_FAILURE;
 
   glfwWindowHint(GLFW_DEPTH_BITS, 24);
-  GLFWwindow* window = glfwCreateWindow(WIDTH, HEIGHT, "guihck-mouseArea", NULL, NULL);
+  GLFWwindow* window = glfwCreateWindow(WIDTH, HEIGHT, "guihck-functions", NULL, NULL);
 
 
   if(!window)
@@ -47,7 +57,8 @@ int main(int argc, char** argv)
   guihckContext* ctx = guihckContextNew();
   guihckElementsAddAllTypes(ctx);
   guihckGlhckAddAllTypes(ctx);
-  guihckContextExecuteScriptFile(ctx, "scm/mouseArea.scm");
+  guihckRegisterFunction("set-clear-color", 1, 0, 0, setClearColor);
+  guihckContextExecuteScriptFile(ctx, "scm/functions.scm");
 
   glfwhckEventQueue* queue = glfwhckEventQueueNew(window, GLFWHCK_EVENTS_ALL);
 

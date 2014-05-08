@@ -49,6 +49,16 @@ typedef struct _guihckMouseArea
   guihckMouseAreaFunctionMap functionMap;
 } _guihckMouseArea;
 
+void guihckInit()
+{
+  guihckGuileInit();
+}
+
+void guihckRegisterFunction(const char* name, int req, int opt, int rst, scm_t_subr func)
+{
+  guihckGuileRegisterFunction(name, req, opt, rst, func);
+}
+
 guihckContext* guihckContextNew()
 {
   guihckContext* ctx = calloc(1, sizeof(guihckContext));
@@ -233,12 +243,12 @@ void* guihckElementGetData(guihckContext* ctx, guihckElementId elementId)
 
 void guihckContextExecuteExpression(guihckContext* ctx, SCM expression)
 {
-  guihckContextRunGuileExpression(ctx, expression);
+  guihckGuileRunExpression(ctx, expression);
 }
 
 void guihckContextExecuteScript(guihckContext* ctx, const char* script)
 {
-  guihckContextRunGuile(ctx, script);
+  guihckGuileRunScript(ctx, script);
 }
 
 void guihckContextExecuteScriptFile(guihckContext* ctx, const char* path)
