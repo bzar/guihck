@@ -29,6 +29,15 @@ typedef struct _guihckElementType
   size_t dataSize;
 } _guihckElementType;
 
+typedef struct _guihckRect
+{
+    float x;
+    float y;
+    float w;
+    float h;
+
+} _guihckRect;
+
 typedef struct _guihckElement
 {
   guihckElementTypeId type;
@@ -42,10 +51,7 @@ typedef struct _guihckElement
 typedef struct _guihckMouseArea
 {
   guihckElementId elementId;
-  float x;
-  float y;
-  float w;
-  float h;
+  _guihckRect rect;
   guihckMouseAreaFunctionMap functionMap;
 } _guihckMouseArea;
 
@@ -356,9 +362,9 @@ void guihckContextElementProperty(guihckContext* ctx, const char* key, SCM value
 
 
 
-static char pointInRect(float x, float y, float rx, float ry, float rw, float rh)
+static char pointInRect(float x, float y, const _guihckRect* r)
 {
-  return x >= rx && x <= rx + rw && y >= ry && y <= ry + rh;
+  return x >= r->x && x <= r->x + r->w && y >= r->y && y <= r->y + r->h;
 }
 
 void guihckContextMouseDown(guihckContext* ctx, float x, float y, int button)
@@ -369,7 +375,7 @@ void guihckContextMouseDown(guihckContext* ctx, float x, float y, int button)
   while (mouseArea = chckPoolIter(ctx->mouseAreas, &mouseAreaIter))
   {
     if(mouseArea->functionMap.mouseDown
-       && pointInRect(x, y, mouseArea->x, mouseArea->y, mouseArea->w, mouseArea->h))
+       && pointInRect(x, y, &mouseArea->rect))
     {
       mouseArea->functionMap.mouseDown(ctx, mouseArea->elementId, guihckElementGetData(ctx, mouseArea->elementId), button, x, y);
     }
@@ -385,7 +391,7 @@ void guihckContextMouseUp(guihckContext* ctx, float x, float y, int button)
   while (mouseArea = chckPoolIter(ctx->mouseAreas, &mouseAreaIter))
   {
     if(mouseArea->functionMap.mouseUp
-       && pointInRect(x, y, mouseArea->x, mouseArea->y, mouseArea->w, mouseArea->h))
+       && pointInRect(x, y, &mouseArea->rect))
     {
       mouseArea->functionMap.mouseUp(ctx, mouseArea->elementId, guihckElementGetData(ctx, mouseArea->elementId), button, x, y);
     }
@@ -403,8 +409,8 @@ void guihckContextMouseMove(guihckContext* ctx, float sx, float sy, float dx, fl
     if(!mouseArea->functionMap.mouseMove && !mouseArea->functionMap.mouseEnter && !mouseArea->functionMap.mouseExit)
       continue;
 
-    bool s = pointInRect(sx, sy, mouseArea->x, mouseArea->y, mouseArea->w, mouseArea->h);
-    bool d = pointInRect(dx, dy, mouseArea->x, mouseArea->y, mouseArea->w, mouseArea->h);
+    bool s = pointInRect(sx, sy, &mouseArea->rect);
+    bool d = pointInRect(dx, dy, &mouseArea->rect);
 
     if(s && d)
     {
@@ -429,10 +435,10 @@ guihckMouseAreaId guihckMouseAreaNew(guihckContext* ctx, guihckElementId element
 {
   _guihckMouseArea mouseArea;
   mouseArea.elementId = elementId;
-  mouseArea.x = 0;
-  mouseArea.y = 0;
-  mouseArea.w = 0;
-  mouseArea.x = 0;
+  mouseArea.rect.x = 0;
+  mouseArea.rect.y = 0;
+  mouseArea.rect.w = 0;
+  mouseArea.rect.h = 0;
   mouseArea.functionMap = functionMap;
   guihckMouseAreaId id;
   chckPoolAdd(ctx->mouseAreas, &mouseArea, &id);
@@ -451,10 +457,10 @@ void guihckMouseAreaRect(guihckContext* ctx, guihckMouseAreaId mouseAreaId, floa
   _guihckMouseArea* mouseArea = (_guihckMouseArea*) chckPoolGet(ctx->mouseAreas, mouseAreaId);
   if(mouseArea)
   {
-    mouseArea->x = x;
-    mouseArea->y = y;
-    mouseArea->w = width;
-    mouseArea->h = height;
+    mouseArea->rect.x = x;
+    mouseArea->rect.y = y;
+    mouseArea->rect.w = width;
+    mouseArea->rect.h = height;
   }
 }
 
@@ -464,12 +470,9 @@ void guihckMouseAreaGetRect(guihckContext* ctx, guihckMouseAreaId mouseAreaId, f
   _guihckMouseArea* mouseArea = (_guihckMouseArea*) chckPoolGet(ctx->mouseAreas, mouseAreaId);
   if(mouseArea)
   {
-    if(x) *x = mouseArea->x;
-    if(y) *y = mouseArea->y;
-    if(width) *width = mouseArea->w;
-    if(height) *height = mouseArea->h;
+    if(x) *x = mouseArea->rect.x;
+    if(y) *y = mouseArea->rect.y;
+    if(width) *width = mouseArea->rect.w;
+    if(height) *height = mouseArea->rect.h;
   }
 }
-
-
-

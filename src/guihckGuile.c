@@ -40,7 +40,7 @@ static const char INITIAL_SCM[] =
     ""
     "  (lambda ()"
     "    (begin"
-    "      (create-element! type)"
+    "      (push-new-element! type)"
     "      (set-properties! props)"
     "      (map (lambda (c) (c)) children)"
     "      (pop-element!))))";
