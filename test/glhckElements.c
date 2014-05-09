@@ -53,7 +53,7 @@ int main(int argc, char** argv)
   guihckContext* ctx = guihckContextNew();
   guihckGlhckAddAllTypes(ctx);
 
-  guihckContextCreateElement(ctx, "rectangle");
+  guihckContextPushNewElement(ctx, "rectangle");
   guihckContextElementProperty(ctx, "x", scm_from_double(200.0));
   guihckContextElementProperty(ctx, "y", scm_from_double(100.0));
   guihckContextElementProperty(ctx, "width", scm_from_double(50.0));

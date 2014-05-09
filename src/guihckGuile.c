@@ -50,8 +50,9 @@ static void* initGuile(void*);
 static void* registerFunction(void*);
 static void* runStringInGuile(void* data);
 static void* runExpressionInGuile(void* data);
-static SCM guileCreateElement(SCM typeSymbol);
+static SCM guilePushNewElement(SCM typeSymbol);
 static SCM guilePushElement(SCM idSymbol);
+static SCM guilePushParentElement();
 static SCM guileSetElementProperty(SCM keySymbol, SCM value);
 static SCM guileGetElementProperty(SCM keySymbol);
 static SCM guilePopElement();
@@ -86,8 +87,9 @@ SCM guihckGuileRunExpression(guihckContext* ctx, SCM expression)
 
 void* initGuile(void* data)
 {
-  scm_c_define_gsubr("create-element!", 1, 0, 0, guileCreateElement);
+  scm_c_define_gsubr("push-new-element!", 1, 0, 0, guilePushNewElement);
   scm_c_define_gsubr("push-element!", 1, 0, 0, guilePushElement);
+  scm_c_define_gsubr("push-parent-element!", 0, 0, 0, guilePushParentElement);
   scm_c_define_gsubr("pop-element!", 0, 0, 0, guilePopElement);
   scm_c_define_gsubr("set-element-property!", 2, 0, 0, guileSetElementProperty);
   scm_c_define_gsubr("get-element-property!", 1, 0, 0, guileGetElementProperty);
@@ -115,12 +117,12 @@ void* runExpressionInGuile(void* data)
   return result;
 }
 
-SCM guileCreateElement(SCM typeSymbol)
+SCM guilePushNewElement(SCM typeSymbol)
 {
   if(scm_symbol_p(typeSymbol))
   {
     char* typeName = scm_to_utf8_string(scm_symbol_to_string(typeSymbol));
-    guihckContextCreateElement(threadLocalContext.ctx, typeName);
+    guihckContextPushNewElement(threadLocalContext.ctx, typeName);
     return SCM_BOOL_T;
   }
   else
@@ -142,6 +144,12 @@ SCM guilePushElement(SCM idSymbol)
     return SCM_BOOL_F;
   }
 }
+SCM guilePushParentElement()
+{
+  guihckContextPushParentElement(threadLocalContext.ctx);
+  return SCM_BOOL_T;
+}
+
 SCM guileSetElementProperty(SCM keySymbol, SCM value)
 {
   if(scm_symbol_p(keySymbol))

@@ -77,9 +77,10 @@ void guihckContextExecuteScript(guihckContext* ctx, const char* script);
 void guihckContextExecuteScriptFile(guihckContext* ctx, const char* path);
 
 // Element stack operations
-void guihckContextCreateElement(guihckContext* ctx, const char* typeName);
+void guihckContextPushNewElement(guihckContext* ctx, const char* typeName);
 void guihckContextPushElement(guihckContext* ctx, guihckElementId elementId);
 void guihckContextPushElementById(guihckContext* ctx, const char* id);
+void guihckContextPushParentElement(guihckContext* ctx);
 void guihckContextPopElement(guihckContext* ctx);
 SCM guihckContextGetElementProperty(guihckContext* ctx, const char *key);
 void guihckContextElementProperty(guihckContext* ctx, const char* key, SCM value);

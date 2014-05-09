@@ -270,7 +270,7 @@ void guihckContextExecuteScriptFile(guihckContext* ctx, const char* path)
   }
 }
 
-void guihckContextCreateElement(guihckContext* ctx, const char* typeName)
+void guihckContextPushNewElement(guihckContext* ctx, const char* typeName)
 {
   guihckElementId parentId = GUIHCK_NO_PARENT;
   if(chckIterPoolCount(ctx->stack) > 0)
@@ -315,6 +315,14 @@ void guihckContextPushElementById(guihckContext* ctx, const char* id)
     }
   }
   assert(false && "Could not find element with requested id");
+}
+
+void guihckContextPushParentElement(guihckContext* ctx)
+{
+  guihckElementId* id = chckIterPoolGetLast(ctx->stack);
+  assert(id && "Element stack is empty");
+  guihckElementId parentId = guihckElementGetParent(ctx, *id);
+  guihckContextPushElement(ctx, parentId);
 }
 
 void guihckContextPopElement(guihckContext* ctx)
