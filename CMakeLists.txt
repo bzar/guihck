@@ -17,6 +17,7 @@ include_directories(
   ${guile-2.0_INCLUDE_DIRS}
   ${glhck_SOURCE_DIR}/include
   lib/chck/pool
+  lib/chck/lut
 )
 
 file(GLOB SOURCES src/*.c)
@@ -25,7 +26,7 @@ add_library(guihck
     ${SOURCES}
 )
 
-target_link_libraries(guihck chckPool ${guile-2.0_LIBRARIES})
+target_link_libraries(guihck chckPool chckLut ${guile-2.0_LIBRARIES})
 
 if(GUIHCK_BUILD_TESTS)
   add_subdirectory(test)

@@ -1,7 +1,7 @@
 #include "guihck.h"
 #include "guihckGuile.h"
 #include "pool.h"
-
+#include "lut.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -16,7 +16,7 @@ typedef struct _guihckKeyValueMapping
 
 typedef struct _guihckContext
 {
-  chckPool* elements; /* should have trie by name */
+  chckPool* elements;
   chckPool* elementTypes;
   chckPool* mouseAreas;  /* should also have a quadtree for references */
   chckIterPool* stack;
@@ -44,7 +44,7 @@ typedef struct _guihckElement
   void* data;
   guihckElementId parent;
   chckIterPool* children;
-  chckIterPool* properties; /* Should change to trie */
+  chckHashTable* properties;
   bool dirty;
 } _guihckElement;
 
@@ -88,7 +88,7 @@ void guihckContextFree(guihckContext* ctx)
     if(type->functionMap.destroy)
       type->functionMap.destroy(ctx, iter - 1, current->data); /* id = iter - 1 */
     chckIterPoolFree(current->children);
-    chckIterPoolFree(current->properties);
+    chckHashTableFree(current->properties);
     free(current->data);
   }
 
@@ -167,7 +167,7 @@ guihckElementId guihckElementNew(guihckContext* ctx, guihckElementTypeId typeId,
   element.data = type->dataSize > 0 ? calloc(1, type->dataSize) : NULL;
   element.parent = parentId;
   element.children = chckIterPoolNew(8, 8, sizeof(guihckElementId));
-  element.properties = chckIterPoolNew(8, 8, sizeof(_guihckKeyValueMapping));
+  element.properties = chckHashTableNew(32);
   element.dirty = true;
 
   guihckElementId id = -1;
@@ -194,7 +194,7 @@ void guihckElementRemove(guihckContext* ctx, guihckElementId elementId)
   _guihckElementType* type = chckPoolGet(ctx->elementTypes, element->type);
   if(type->functionMap.destroy)
     type->functionMap.destroy(ctx, elementId, element->data);
-  chckIterPoolFree(element->properties);
+  chckHashTableFree(element->properties);
   if(element->data)
     free(element->data);
 
@@ -212,57 +212,38 @@ void guihckElementRemove(guihckContext* ctx, guihckElementId elementId)
 SCM guihckElementGetProperty(guihckContext* ctx, guihckElementId elementId, const char* key)
 {
   guihckElement* element = chckPoolGet(ctx->elements, elementId);
-  chckPoolIndex iter = 0;
-  _guihckKeyValueMapping* current;
-  while ((current = chckIterPoolIter(element->properties, &iter)))
-  {
-    if(strcmp(current->key, key) == 0)
-    {
-      return current->value;
-    }
-  }
-
-  return SCM_UNDEFINED;
+  SCM* value = chckHashTableStrGet(element->properties, key);
+  return value ? *value : SCM_UNDEFINED;
 }
 
 
 void guihckElementProperty(guihckContext* ctx, guihckElementId elementId, const char* key, SCM value)
 {
   guihckElement* element = chckPoolGet(ctx->elements, elementId);
-  chckPoolIndex iter = 0;
-  _guihckKeyValueMapping* current;
-  while ((current = chckIterPoolIter(element->properties, &iter)))
-  {
-    if(strcmp(current->key, key) == 0)
-    {
-      if(scm_is_false(scm_equal_p(current->value, value)))
-      {
-        current->value = value;
-        guihckElementDirty(ctx, elementId);
+  SCM* oldValue = chckHashTableStrGet(element->properties, key);
+  bool newValue = !oldValue;
+  bool valueChanged = !newValue && scm_is_false(scm_equal_p(*oldValue, value));
+  chckHashTableStrSet(element->properties, key, &value, sizeof(SCM));
 
-        // Execute change handler if defined
-        size_t changeHandlerKeySize = snprintf(NULL, 0, "%sChanged", key);
-        char* changeHandlerKey = calloc(sizeof(char), changeHandlerKeySize);
-        sprintf(changeHandlerKey, "%sChanged", key);
-        SCM changeHandler = guihckElementGetProperty(ctx, elementId, changeHandlerKey);
-        free(changeHandlerKey);
-        if(scm_is_true(scm_list_p(changeHandler)))
-        {
-          guihckStackPushElement(ctx, elementId);
-          guihckContextExecuteExpression(ctx, changeHandler);
-          guihckStackPopElement(ctx);
-        }
-      }
-      return;
+  if(valueChanged)
+  {
+    size_t changeHandlerKeySize = snprintf(NULL, 0, "%sChanged", key);
+    char* changeHandlerKey = calloc(sizeof(char), changeHandlerKeySize);
+    sprintf(changeHandlerKey, "%sChanged", key);
+    SCM changeHandler = guihckElementGetProperty(ctx, elementId, changeHandlerKey);
+    free(changeHandlerKey);
+    if(scm_is_true(scm_list_p(changeHandler)))
+    {
+      guihckStackPushElement(ctx, elementId);
+      guihckContextExecuteExpression(ctx, changeHandler);
+      guihckStackPopElement(ctx);
     }
   }
 
-  _guihckKeyValueMapping mapping;
-  mapping.key = strdup(key);
-  mapping.value = value;
-
-  chckIterPoolAdd(element->properties, &mapping, NULL);
-  guihckElementDirty(ctx, elementId);
+  if(newValue || valueChanged)
+  {
+    guihckElementDirty(ctx, elementId);
+  }
 }
 
 
