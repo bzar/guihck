@@ -18,6 +18,7 @@ typedef struct _guihckContext
 {
   chckPool* elements;
   chckPool* elementTypes;
+  chckHashTable* elementTypesByName;
   chckPool* mouseAreas;  /* should also have a quadtree for references */
   chckIterPool* stack;
 } _guihckContext;
@@ -72,6 +73,7 @@ guihckContext* guihckContextNew()
   guihckContext* ctx = calloc(1, sizeof(guihckContext));
   ctx->elements = chckPoolNew(64, 64, sizeof(guihckElement));
   ctx->elementTypes = chckPoolNew(16, 16, sizeof(_guihckElementType));
+  ctx->elementTypesByName = chckHashTableNew(32);
   ctx->mouseAreas = chckPoolNew(16, 16, sizeof(_guihckMouseArea));
   ctx->stack = chckIterPoolNew(16, 16, sizeof(guihckElementId));
   return ctx;
@@ -92,8 +94,10 @@ void guihckContextFree(guihckContext* ctx)
     free(current->data);
   }
 
-  chckPoolFree(ctx->elements);
   chckPoolFree(ctx->mouseAreas);
+  chckPoolFree(ctx->elements);
+  chckHashTableFree(ctx->elementTypesByName);
+  chckPoolFree(ctx->elementTypes);
   free(ctx);
 }
 
@@ -155,6 +159,7 @@ guihckElementTypeId guihckElementTypeAdd(guihckContext* ctx, const char* name, g
 
   guihckElementTypeId id = -1;
   chckPoolAdd(ctx->elementTypes, &type, &id);
+  chckHashTableStrSet(ctx->elementTypesByName, name, &id, sizeof(guihckElementTypeId));
 
   return id;
 }
@@ -329,20 +334,10 @@ void guihckStackPushNewElement(guihckContext* ctx, const char* typeName)
     parentId = *((guihckElementId*) chckIterPoolGetLast(ctx->stack));
   }
 
-  guihckElementTypeId typeId = 0;
-  _guihckElementType* type  = NULL;
-  while (type = chckPoolIter(ctx->elementTypes, &typeId))
-  {
-    if(strcmp(type->name, typeName) == 0)
-    {
-      typeId -= 1; /* id = iterator value - 1 */
-      break;
-    }
-  }
+  guihckElementTypeId* typeId = chckHashTableStrGet(ctx->elementTypesByName, typeName);
+  assert(typeId && "Element type not found");
 
-  assert(type && "Element type not found");
-
-  guihckElementId id = guihckElementNew(ctx, typeId, parentId);
+  guihckElementId id = guihckElementNew(ctx, *typeId, parentId);
   chckIterPoolAdd(ctx->stack, &id, NULL);
 }
 
