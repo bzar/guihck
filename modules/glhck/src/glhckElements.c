@@ -177,7 +177,10 @@ bool updateText(guihckContext* ctx, guihckElementId id, void* data)
     glhckTextureGetInformation(texture, NULL, &textureWidth, &textureHeight, NULL, NULL, NULL, NULL);
     w = textureWidth;
     h = textureHeight;
+    guihckElementProperty(ctx, id, "width", scm_from_double(w));
+    guihckElementProperty(ctx, id, "height", scm_from_double(h));
   }
+
   kmVec3 position = *glhckObjectGetPosition(d->object);
   kmVec3 scale = *glhckObjectGetScale(d->object);
   scale.x = w/2;
