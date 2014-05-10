@@ -61,6 +61,14 @@ int main(int argc, char** argv)
   guihckStackElementProperty(ctx, "color", scm_list_3(scm_from_uint8(128), scm_from_uint8(52), scm_from_uint8(200)));
   guihckStackPopElement(ctx);
 
+  guihckStackPushNewElement(ctx, "text");
+  guihckStackElementProperty(ctx, "x", scm_from_double(50.0));
+  guihckStackElementProperty(ctx, "y", scm_from_double(300.0));
+  guihckStackElementProperty(ctx, "text", scm_from_utf8_string("guihck rocks!"));
+  guihckStackElementProperty(ctx, "size", scm_from_double(100));
+  guihckStackElementProperty(ctx, "color", scm_list_3(scm_from_uint8(128), scm_from_uint8(52), scm_from_uint8(200)));
+  guihckStackPopElement(ctx);
+
   while(RUNNING)
   {
     glfwPollEvents();
