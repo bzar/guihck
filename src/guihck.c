@@ -176,7 +176,10 @@ guihckElementId guihckElementNew(guihckContext* ctx, guihckElementTypeId typeId,
 
   guihckElement* parent = chckPoolGet(ctx->elements, parentId);
   if(parent)
+  {
     chckIterPoolAdd(parent->children, &id, NULL);
+    guihckElementDirty(ctx, parentId);
+  }
 
   if(type->functionMap.init)
     type->functionMap.init(ctx, id, element.data);
@@ -245,9 +248,9 @@ void guihckElementProperty(guihckContext* ctx, guihckElementId elementId, const 
         free(changeHandlerKey);
         if(scm_is_true(scm_list_p(changeHandler)))
         {
-          guihckContextPushElement(ctx, elementId);
+          guihckStackPushElement(ctx, elementId);
           guihckContextExecuteExpression(ctx, changeHandler);
-          guihckContextPopElement(ctx);
+          guihckStackPopElement(ctx);
         }
       }
       return;
@@ -273,6 +276,16 @@ size_t guihckElementGetChildCount(guihckContext* ctx, guihckElementId elementId)
 {
   guihckElement* element = chckPoolGet(ctx->elements, elementId);
   return chckIterPoolCount(element->children) ;
+}
+
+guihckElementId guihckElementGetChild(guihckContext* ctx, guihckElementId elementId, int childIndex)
+{
+  guihckElement* element = chckPoolGet(ctx->elements, elementId);
+  chckPoolIndex iter = 0;
+  guihckElementId* childId;
+  int i = 0;
+  while ((childId = chckIterPoolIter(element->children, &iter)) && i++ < childIndex);
+  return *childId;
 }
 
 void guihckElementGetChildren(guihckContext* ctx, guihckElementId elementId, guihckElementId* children)
@@ -327,7 +340,7 @@ void guihckContextExecuteScriptFile(guihckContext* ctx, const char* path)
   }
 }
 
-void guihckContextPushNewElement(guihckContext* ctx, const char* typeName)
+void guihckStackPushNewElement(guihckContext* ctx, const char* typeName)
 {
   guihckElementId parentId = GUIHCK_NO_PARENT;
   if(chckIterPoolCount(ctx->stack) > 0)
@@ -352,12 +365,12 @@ void guihckContextPushNewElement(guihckContext* ctx, const char* typeName)
   chckIterPoolAdd(ctx->stack, &id, NULL);
 }
 
-void guihckContextPushElement(guihckContext* ctx, guihckElementId elementId)
+void guihckStackPushElement(guihckContext* ctx, guihckElementId elementId)
 {
   chckIterPoolAdd(ctx->stack, &elementId, NULL);
 }
 
-void guihckContextPushElementById(guihckContext* ctx, const char* id)
+void guihckStackPushElementById(guihckContext* ctx, const char* id)
 {
   chckPoolIndex iter = 0;
   guihckElementId* current;
@@ -367,22 +380,31 @@ void guihckContextPushElementById(guihckContext* ctx, const char* id)
     SCM eid = guihckElementGetProperty(ctx, iter - 1, "id");
     if(scm_is_true(scm_equal_p(eid, idstr)))
     {
-      guihckContextPushElement(ctx, iter - 1);
+      guihckStackPushElement(ctx, iter - 1);
       return;
     }
   }
   assert(false && "Could not find element with requested id");
 }
 
-void guihckContextPushParentElement(guihckContext* ctx)
+void guihckStackPushParentElement(guihckContext* ctx)
 {
   guihckElementId* id = chckIterPoolGetLast(ctx->stack);
   assert(id && "Element stack is empty");
   guihckElementId parentId = guihckElementGetParent(ctx, *id);
-  guihckContextPushElement(ctx, parentId);
+  guihckStackPushElement(ctx, parentId);
 }
 
-void guihckContextPopElement(guihckContext* ctx)
+void guihckStackPushChildElement(guihckContext* ctx, int childIndex)
+{
+  guihckElementId* id = chckIterPoolGetLast(ctx->stack);
+  assert(id && "Element stack is empty");
+
+  guihckElementId childId = guihckElementGetChild(ctx, *id, childIndex);
+  guihckStackPushElement(ctx, childId);
+}
+
+void guihckStackPopElement(guihckContext* ctx)
 {
   size_t size = chckIterPoolCount(ctx->stack);
   assert(size > 0 && "Element stack is empty");
@@ -390,7 +412,7 @@ void guihckContextPopElement(guihckContext* ctx)
 }
 
 
-SCM guihckContextGetElementProperty(guihckContext* ctx, const char* key)
+SCM guihckStackGetElementProperty(guihckContext* ctx, const char* key)
 {
   guihckElementId* id = chckIterPoolGetLast(ctx->stack);
   assert(id && "Element stack is empty");
@@ -399,12 +421,19 @@ SCM guihckContextGetElementProperty(guihckContext* ctx, const char* key)
 }
 
 
-void guihckContextElementProperty(guihckContext* ctx, const char* key, SCM value)
+void guihckStackElementProperty(guihckContext* ctx, const char* key, SCM value)
 {
   guihckElementId* id = chckIterPoolGetLast(ctx->stack);
   assert(id && "Element stack is empty");
 
   return guihckElementProperty(ctx, *id,  key, value);
+}
+
+int guihckStackGetElementChildCount(guihckContext* ctx)
+{
+  guihckElementId* id = chckIterPoolGetLast(ctx->stack);
+  assert(id && "Element stack is empty");
+  return guihckElementGetChildCount(ctx, *id);
 }
 
 void guihckContextMouseDown(guihckContext* ctx, float x, float y, int button)

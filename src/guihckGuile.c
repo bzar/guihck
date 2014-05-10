@@ -1,4 +1,6 @@
 #include "guihckGuile.h"
+#include "guihckGuileDefaultScm.h"
+
 #if defined(_MSC_VER)
 # define _GUIHCK_TLS __declspec(thread)
 # define _GUIHCK_TLS_FOUND
@@ -13,6 +15,7 @@
 typedef struct _guihckGuileContext
 {
   guihckContext* ctx;
+  int ctxRefs;
 } _guihckGuileContext;
 
 typedef struct _functionDefinition
@@ -25,25 +28,7 @@ typedef struct _functionDefinition
 } _functionDefinition;
 
 /* Thread-local storage for guile context */
-static _GUIHCK_TLS _guihckGuileContext threadLocalContext;
-
-static const char INITIAL_SCM[] =
-    ""
-    "(define (create-elements . elements)"
-    "  (map (lambda (e) (e)) elements))"
-    ""
-    "(define (create-element type props children)"
-    "  (define (set-properties! props)"
-    "    (if (null? props) '() (begin"
-    "      (set-element-property! (car props) (cadr props))"
-    "      (set-properties! (cddr props)))))"
-    "  (lambda ()"
-    "    (begin"
-    "      (push-new-element! type)"
-    "      (set-properties! props)"
-    "      (map (lambda (c) (c)) children)"
-    "      (pop-element!))))";
-
+static _GUIHCK_TLS _guihckGuileContext threadLocalContext = {NULL, 0};
 
 static void* initGuile(void*);
 static void* registerFunction(void*);
@@ -52,8 +37,10 @@ static void* runExpressionInGuile(void* data);
 static SCM guilePushNewElement(SCM typeSymbol);
 static SCM guilePushElement(SCM idSymbol);
 static SCM guilePushParentElement();
+static SCM guilePushChildElement(SCM childIndex);
 static SCM guileSetElementProperty(SCM keySymbol, SCM value);
 static SCM guileGetElementProperty(SCM keySymbol);
+static SCM guileGetElementChildCount();
 static SCM guilePopElement();
 
 void guihckGuileInit()
@@ -70,8 +57,16 @@ void guihckGuileRegisterFunction(const char* name, int req, int opt, int rst, sc
 SCM guihckGuileRunScript(guihckContext* ctx, const char* script)
 {
   threadLocalContext.ctx = ctx;
+  threadLocalContext.ctxRefs += 1;
+
   SCM result = scm_with_guile(runStringInGuile, &script);
-  threadLocalContext.ctx = NULL;
+
+  threadLocalContext.ctxRefs -= 1;
+  if(threadLocalContext.ctxRefs <= 0)
+  {
+    threadLocalContext.ctx = NULL;
+    threadLocalContext.ctxRefs = 0;
+  }
   return result;
 }
 
@@ -79,8 +74,17 @@ SCM guihckGuileRunScript(guihckContext* ctx, const char* script)
 SCM guihckGuileRunExpression(guihckContext* ctx, SCM expression)
 {
   threadLocalContext.ctx = ctx;
+  threadLocalContext.ctxRefs += 1;
+
   SCM result = scm_with_guile(runExpressionInGuile, expression);
-  threadLocalContext.ctx = NULL;
+
+  threadLocalContext.ctxRefs -= 1;
+  if(threadLocalContext.ctxRefs <= 0)
+  {
+    threadLocalContext.ctx = NULL;
+    threadLocalContext.ctxRefs = 0;
+  }
+
   return result;
 }
 
@@ -89,11 +93,13 @@ void* initGuile(void* data)
   scm_c_define_gsubr("push-new-element!", 1, 0, 0, guilePushNewElement);
   scm_c_define_gsubr("push-element!", 1, 0, 0, guilePushElement);
   scm_c_define_gsubr("push-parent-element!", 0, 0, 0, guilePushParentElement);
+  scm_c_define_gsubr("push-child-element!", 1, 0, 0, guilePushChildElement);
   scm_c_define_gsubr("pop-element!", 0, 0, 0, guilePopElement);
   scm_c_define_gsubr("set-element-property!", 2, 0, 0, guileSetElementProperty);
-  scm_c_define_gsubr("get-element-property!", 1, 0, 0, guileGetElementProperty);
+  scm_c_define_gsubr("get-element-property", 1, 0, 0, guileGetElementProperty);
+  scm_c_define_gsubr("get-element-child-count", 0, 0, 0, guileGetElementChildCount);
 
-  scm_c_eval_string(INITIAL_SCM);
+  scm_c_eval_string(GUIHCK_GUILE_DEFAULT_SCM);
 }
 
 void* registerFunction(void* data)
@@ -121,7 +127,7 @@ SCM guilePushNewElement(SCM typeSymbol)
   if(scm_symbol_p(typeSymbol))
   {
     char* typeName = scm_to_utf8_string(scm_symbol_to_string(typeSymbol));
-    guihckContextPushNewElement(threadLocalContext.ctx, typeName);
+    guihckStackPushNewElement(threadLocalContext.ctx, typeName);
     return SCM_BOOL_T;
   }
   else
@@ -135,7 +141,7 @@ SCM guilePushElement(SCM idSymbol)
   if(scm_symbol_p(idSymbol))
   {
     char* id = scm_to_utf8_string(scm_symbol_to_string(idSymbol));
-    guihckContextPushElementById(threadLocalContext.ctx, id);
+    guihckStackPushElementById(threadLocalContext.ctx, id);
     return SCM_BOOL_T;
   }
   else
@@ -145,8 +151,18 @@ SCM guilePushElement(SCM idSymbol)
 }
 SCM guilePushParentElement()
 {
-  guihckContextPushParentElement(threadLocalContext.ctx);
+  guihckStackPushParentElement(threadLocalContext.ctx);
   return SCM_BOOL_T;
+}
+
+SCM guilePushChildElement(SCM childIndex)
+{
+  if(scm_is_integer(childIndex))
+  {
+    guihckStackPushChildElement(threadLocalContext.ctx, scm_to_int(childIndex));
+    return SCM_BOOL_T;
+  }
+  return SCM_BOOL_F;
 }
 
 SCM guileSetElementProperty(SCM keySymbol, SCM value)
@@ -154,7 +170,7 @@ SCM guileSetElementProperty(SCM keySymbol, SCM value)
   if(scm_symbol_p(keySymbol))
   {
     char* key = scm_to_utf8_string(scm_symbol_to_string(keySymbol));
-    guihckContextElementProperty(threadLocalContext.ctx, key, value);
+    guihckStackElementProperty(threadLocalContext.ctx, key, value);
     return SCM_BOOL_T;
   }
   else
@@ -168,7 +184,7 @@ SCM guileGetElementProperty(SCM keySymbol)
   if(scm_symbol_p(keySymbol))
   {
     char* key = scm_to_utf8_string(scm_symbol_to_string(keySymbol));
-    return guihckContextGetElementProperty(threadLocalContext.ctx, key);
+    return guihckStackGetElementProperty(threadLocalContext.ctx, key);
   }
   else
   {
@@ -176,8 +192,13 @@ SCM guileGetElementProperty(SCM keySymbol)
   }
 }
 
+SCM guileGetElementChildCount()
+{
+  return scm_from_int32(guihckStackGetElementChildCount(threadLocalContext.ctx));
+}
+
 SCM guilePopElement()
 {
-  guihckContextPopElement(threadLocalContext.ctx);
+  guihckStackPopElement(threadLocalContext.ctx);
   return SCM_BOOL_T;
 }

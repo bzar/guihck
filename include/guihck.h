@@ -63,6 +63,7 @@ void guihckElementProperty(guihckContext* ctx, guihckElementId elementId, const 
 
 guihckElementId guihckElementGetParent(guihckContext* ctx, guihckElementId elementId);
 size_t guihckElementGetChildCount(guihckContext* ctx, guihckElementId elementId);
+guihckElementId guihckElementGetChild(guihckContext* ctx, guihckElementId elementId, int childIndex);
 void guihckElementGetChildren(guihckContext* ctx, guihckElementId elementId, guihckElementId* children);
 void guihckElementDirty(guihckContext* ctx, guihckElementId elementId);
 
@@ -81,13 +82,15 @@ void guihckContextExecuteScript(guihckContext* ctx, const char* script);
 void guihckContextExecuteScriptFile(guihckContext* ctx, const char* path);
 
 // Element stack operations
-void guihckContextPushNewElement(guihckContext* ctx, const char* typeName);
-void guihckContextPushElement(guihckContext* ctx, guihckElementId elementId);
-void guihckContextPushElementById(guihckContext* ctx, const char* id);
-void guihckContextPushParentElement(guihckContext* ctx);
-void guihckContextPopElement(guihckContext* ctx);
-SCM guihckContextGetElementProperty(guihckContext* ctx, const char *key);
-void guihckContextElementProperty(guihckContext* ctx, const char* key, SCM value);
+void guihckStackPushNewElement(guihckContext* ctx, const char* typeName);
+void guihckStackPushElement(guihckContext* ctx, guihckElementId elementId);
+void guihckStackPushElementById(guihckContext* ctx, const char* id);
+void guihckStackPushParentElement(guihckContext* ctx);
+void guihckStackPushChildElement(guihckContext* ctx, int childIndex);
+void guihckStackPopElement(guihckContext* ctx);
+SCM guihckStackGetElementProperty(guihckContext* ctx, const char *key);
+void guihckStackElementProperty(guihckContext* ctx, const char* key, SCM value);
+int guihckStackGetElementChildCount(guihckContext* ctx);
 
 #ifdef __cplusplus
 }

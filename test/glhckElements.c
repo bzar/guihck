@@ -53,13 +53,13 @@ int main(int argc, char** argv)
   guihckContext* ctx = guihckContextNew();
   guihckGlhckAddAllTypes(ctx);
 
-  guihckContextPushNewElement(ctx, "rectangle");
-  guihckContextElementProperty(ctx, "x", scm_from_double(200.0));
-  guihckContextElementProperty(ctx, "y", scm_from_double(100.0));
-  guihckContextElementProperty(ctx, "width", scm_from_double(50.0));
-  guihckContextElementProperty(ctx, "height", scm_from_double(75.0));
-  guihckContextElementProperty(ctx, "color", scm_list_3(scm_from_uint8(128), scm_from_uint8(52), scm_from_uint8(200)));
-  guihckContextPopElement(ctx);
+  guihckStackPushNewElement(ctx, "rectangle");
+  guihckStackElementProperty(ctx, "x", scm_from_double(200.0));
+  guihckStackElementProperty(ctx, "y", scm_from_double(100.0));
+  guihckStackElementProperty(ctx, "width", scm_from_double(50.0));
+  guihckStackElementProperty(ctx, "height", scm_from_double(75.0));
+  guihckStackElementProperty(ctx, "color", scm_list_3(scm_from_uint8(128), scm_from_uint8(52), scm_from_uint8(200)));
+  guihckStackPopElement(ctx);
 
   while(RUNNING)
   {

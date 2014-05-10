@@ -7,6 +7,18 @@ static const char GUIHCK_ITEM_SCM[] =
 static const char GUIHCK_MOUSEAREA_SCM[] =
     "(define (mouse-area props . children)"
     "  (create-element 'mouse-area (append '(x 0 y 0 width 0 height 0) props) children))";
+static const char GUIHCK_ROW_SCM[] =
+ "(define row-align-children"
+ "  '(let ((x 0))"
+ "    (with-children (lambda ()"
+ "      (begin"
+ "        (set-element-property! 'x x)"
+ "        (set! x (+ x (get-element-property 'width))))))))"
+
+ "(define row"
+ "  (composite item (list 'xChanged row-align-children"
+ "                        'onLoaded row-align-children)))";
+
 
 static void initMouseArea(guihckContext* ctx, guihckElementId id, void* data);
 static void destroyMouseArea(guihckContext* ctx, guihckElementId id, void* data);
@@ -21,6 +33,7 @@ void guihckElementsAddAllTypes(guihckContext* ctx)
 {
   guihckElementsAddItemType(ctx);
   guihckElementsAddMouseAreaType(ctx);
+  guihckElementsAddRowType(ctx);
 }
 
 void guihckElementsAddItemType(guihckContext* ctx)
@@ -40,6 +53,11 @@ void guihckElementsAddMouseAreaType(guihckContext* ctx)
   };
   guihckElementTypeAdd(ctx, "mouse-area", functionMap, sizeof(guihckMouseAreaId));
   guihckContextExecuteScript(ctx, GUIHCK_MOUSEAREA_SCM);
+}
+
+void guihckElementsAddRowType(guihckContext* ctx)
+{
+  guihckContextExecuteScript(ctx, GUIHCK_ROW_SCM);
 }
 
 void initMouseArea(guihckContext* ctx, guihckElementId id, void* data)
@@ -84,9 +102,9 @@ bool mouseAreaMouseDown(guihckContext* ctx, guihckElementId id, void* data, int 
   SCM handler = guihckElementGetProperty(ctx, id, "onMouseDown");
   if(scm_to_bool(scm_list_p(handler)))
   {
-   guihckContextPushElement(ctx, id);
+   guihckStackPushElement(ctx, id);
    guihckContextExecuteExpression(ctx, handler);
-   guihckContextPopElement(ctx);
+   guihckStackPopElement(ctx);
   }
   return false;
 }
@@ -96,9 +114,9 @@ bool mouseAreaMouseUp(guihckContext* ctx, guihckElementId id, void* data, int bu
   SCM handler = guihckElementGetProperty(ctx, id, "onMouseUp");
   if(scm_to_bool(scm_list_p(handler)))
   {
-   guihckContextPushElement(ctx, id);
+   guihckStackPushElement(ctx, id);
    guihckContextExecuteExpression(ctx, handler);
-   guihckContextPopElement(ctx);
+   guihckStackPopElement(ctx);
   }
   return false;
 }
@@ -108,9 +126,9 @@ bool mouseAreaMouseMove(guihckContext* ctx, guihckElementId id, void* data, floa
   SCM handler = guihckElementGetProperty(ctx, id, "onMouseMove");
   if(scm_to_bool(scm_list_p(handler)))
   {
-   guihckContextPushElement(ctx, id);
+   guihckStackPushElement(ctx, id);
    guihckContextExecuteExpression(ctx, handler);
-   guihckContextPopElement(ctx);
+   guihckStackPopElement(ctx);
   }
   return false;
 }
@@ -119,9 +137,9 @@ bool mouseAreaMouseEnter(guihckContext* ctx, guihckElementId id, void* data, flo
   SCM handler = guihckElementGetProperty(ctx, id, "onMouseEnter");
   if(scm_to_bool(scm_list_p(handler)))
   {
-   guihckContextPushElement(ctx, id);
+   guihckStackPushElement(ctx, id);
    guihckContextExecuteExpression(ctx, handler);
-   guihckContextPopElement(ctx);
+   guihckStackPopElement(ctx);
   }
   return false;
 }
@@ -130,9 +148,9 @@ bool mouseAreaMouseExit(guihckContext* ctx, guihckElementId id, void* data, floa
   SCM handler = guihckElementGetProperty(ctx, id, "onMouseExit");
   if(scm_to_bool(scm_list_p(handler)))
   {
-   guihckContextPushElement(ctx, id);
+   guihckStackPushElement(ctx, id);
    guihckContextExecuteExpression(ctx, handler);
-   guihckContextPopElement(ctx);
+   guihckStackPopElement(ctx);
   }
   return false;
 }

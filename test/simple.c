@@ -37,8 +37,8 @@ int main(int argc, char** argv)
   // Trivial test for stack operations
   guihckContext* ctx2 = guihckContextNew();
   guihckElementTypeAdd(ctx2, "foo", fooMap, 0);
-  guihckContextPushNewElement(ctx2, "foo");
-  guihckContextPopElement(ctx2);
+  guihckStackPushNewElement(ctx2, "foo");
+  guihckStackPopElement(ctx2);
   guihckContextUpdate(ctx2);
   guihckContextRender(ctx2);
   guihckContextFree(ctx2);
