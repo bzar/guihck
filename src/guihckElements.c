@@ -21,7 +21,6 @@ void guihckElementsAddAllTypes(guihckContext* ctx)
 {
   guihckElementsAddItemType(ctx);
   guihckElementsAddMouseAreaType(ctx);
-  guihckElementsAddRowType(ctx);
 }
 
 void guihckElementsAddItemType(guihckContext* ctx)

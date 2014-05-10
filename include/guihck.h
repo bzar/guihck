@@ -64,7 +64,7 @@ void guihckElementProperty(guihckContext* ctx, guihckElementId elementId, const 
 guihckElementId guihckElementGetParent(guihckContext* ctx, guihckElementId elementId);
 size_t guihckElementGetChildCount(guihckContext* ctx, guihckElementId elementId);
 void guihckElementGetChildren(guihckContext* ctx, guihckElementId elementId, guihckElementId* children);
-
+void guihckElementDirty(guihckContext* ctx, guihckElementId elementId);
 
 void* guihckElementGetData(guihckContext* ctx, guihckElementId elementId);
 

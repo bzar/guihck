@@ -55,6 +55,8 @@ typedef struct _guihckMouseArea
   guihckMouseAreaFunctionMap functionMap;
 } _guihckMouseArea;
 
+static char pointInRect(float x, float y, const _guihckRect* r);
+
 void guihckInit()
 {
   guihckGuileInit();
@@ -106,7 +108,20 @@ void guihckContextUpdate(guihckContext* ctx)
       _guihckElementType* type = chckPoolGet(ctx->elementTypes, current->type);
       assert(type && "Invalid element type");
       if(type->functionMap.update)
-        current->dirty = type->functionMap.update(ctx, iter - 1, current->data); /* id = iterator - 1 */
+      {
+        if(type->functionMap.update(ctx, iter - 1, current->data)) /* id = iterator - 1 */
+        {
+          guihckElementDirty(ctx, iter - 1);
+        }
+        else
+        {
+          current->dirty = false;
+        }
+      }
+      else
+      {
+        current->dirty = false;
+      }
     }
   }
 }
@@ -220,7 +235,7 @@ void guihckElementProperty(guihckContext* ctx, guihckElementId elementId, const 
       if(scm_is_false(scm_equal_p(current->value, value)))
       {
         current->value = value;
-        element->dirty = true;
+        guihckElementDirty(ctx, elementId);
 
         // Execute change handler if defined
         size_t changeHandlerKeySize = snprintf(NULL, 0, "%sChanged", key);
@@ -244,7 +259,7 @@ void guihckElementProperty(guihckContext* ctx, guihckElementId elementId, const 
   mapping.value = value;
 
   chckIterPoolAdd(element->properties, &mapping, NULL);
-  element->dirty = true;
+  guihckElementDirty(ctx, elementId);
 }
 
 
@@ -264,6 +279,17 @@ void guihckElementGetChildren(guihckContext* ctx, guihckElementId elementId, gui
 {
   guihckElement* element = chckPoolGet(ctx->elements, elementId);
   chckIterPoolSetCArray(element->children, children, chckIterPoolCount(element->children));
+}
+
+void guihckElementDirty(guihckContext* ctx, guihckElementId elementId)
+{
+  guihckElement* element = chckPoolGet(ctx->elements, elementId);
+  element->dirty = true;
+
+  chckPoolIndex iter = 0;
+  guihckElementId* childId;
+  while ((childId = chckIterPoolIter(element->children, &iter)))
+    guihckElementDirty(ctx, *childId);
 }
 
 void* guihckElementGetData(guihckContext* ctx, guihckElementId elementId)
@@ -381,17 +407,6 @@ void guihckContextElementProperty(guihckContext* ctx, const char* key, SCM value
   return guihckElementProperty(ctx, *id,  key, value);
 }
 
-
-
-
-
-
-
-static char pointInRect(float x, float y, const _guihckRect* r)
-{
-  return x >= r->x && x <= r->x + r->w && y >= r->y && y <= r->y + r->h;
-}
-
 void guihckContextMouseDown(guihckContext* ctx, float x, float y, int button)
 {
   /* Should be replaced by querying a quad tree*/
@@ -501,3 +516,9 @@ void guihckMouseAreaGetRect(guihckContext* ctx, guihckMouseAreaId mouseAreaId, f
     if(height) *height = mouseArea->rect.h;
   }
 }
+
+char pointInRect(float x, float y, const _guihckRect* r)
+{
+  return x >= r->x && x <= r->x + r->w && y >= r->y && y <= r->y + r->h;
+}
+
