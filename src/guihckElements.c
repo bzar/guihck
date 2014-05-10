@@ -9,16 +9,34 @@ static const char GUIHCK_MOUSEAREA_SCM[] =
     "  (create-element 'mouse-area (append '(x 0 y 0 width 0 height 0) props) children))";
 static const char GUIHCK_ROW_SCM[] =
  "(define row-align-children"
- "  '(let ((x 0) (spacing (get-element-property 'spacing)))"
+ "  '(let ((h 0) (x 0) (spacing (get-element-property 'spacing)))"
  "    (with-children (lambda ()"
  "      (begin"
  "        (set-element-property! 'x x)"
- "        (set! x (+ x spacing (get-element-property 'width))))))))"
+ "        (set! x (+ x spacing (get-element-property 'width)))"
+ "        (set! h (if (< h (get-element-property 'height)) (get-element-property 'height) h)))))"
+ "    (set-element-property! 'height h)"
+ "    (set-element-property! 'width (- x spacing))))"
 
  "(define row"
  "  (composite item (list 'spacing 0"
  "                        'xChanged row-align-children"
  "                        'onLoaded row-align-children)))";
+static const char GUIHCK_COLUMN_SCM[] =
+ "(define column-align-children"
+ "  '(let ((w 0) (y 0) (spacing (get-element-property 'spacing)))"
+ "    (with-children (lambda ()"
+ "      (begin"
+ "        (set-element-property! 'y y)"
+ "        (set! y (+ y spacing (get-element-property 'height)))"
+ "        (set! w (if (< w (get-element-property 'width)) (get-element-property 'width) w)))))"
+ "    (set-element-property! 'width w)"
+ "    (set-element-property! 'height (- y spacing))))"
+
+ "(define column"
+ "  (composite item (list 'spacing 0"
+ "                        'yChanged column-align-children"
+ "                        'onLoaded column-align-children)))";
 
 
 static void initMouseArea(guihckContext* ctx, guihckElementId id, void* data);
@@ -35,6 +53,7 @@ void guihckElementsAddAllTypes(guihckContext* ctx)
   guihckElementsAddItemType(ctx);
   guihckElementsAddMouseAreaType(ctx);
   guihckElementsAddRowType(ctx);
+  guihckElementsAddColumnType(ctx);
 }
 
 void guihckElementsAddItemType(guihckContext* ctx)
@@ -59,6 +78,10 @@ void guihckElementsAddMouseAreaType(guihckContext* ctx)
 void guihckElementsAddRowType(guihckContext* ctx)
 {
   guihckContextExecuteScript(ctx, GUIHCK_ROW_SCM);
+}
+void guihckElementsAddColumnType(guihckContext* ctx)
+{
+  guihckContextExecuteScript(ctx, GUIHCK_COLUMN_SCM);
 }
 
 void initMouseArea(guihckContext* ctx, guihckElementId id, void* data)
@@ -94,7 +117,7 @@ bool updateMouseArea(guihckContext* ctx, guihckElementId id, void* data)
   if(scm_to_bool(scm_real_p(w))) pw = scm_to_double(w);
   if(scm_to_bool(scm_real_p(h))) ph = scm_to_double(h);
 
-  guihckMouseAreaRect(ctx, *((guihckMouseAreaId*) data), px, py, ph, pw);
+  guihckMouseAreaRect(ctx, *((guihckMouseAreaId*) data), px, py, pw, ph);
 
   return false;
 }

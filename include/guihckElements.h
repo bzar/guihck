@@ -8,5 +8,6 @@ void guihckElementsAddAllTypes(guihckContext* ctx);
 void guihckElementsAddItemType(guihckContext* ctx);
 void guihckElementsAddMouseAreaType(guihckContext* ctx);
 void guihckElementsAddRowType(guihckContext* ctx);
+void guihckElementsAddColumnType(guihckContext* ctx);
 
 #endif
