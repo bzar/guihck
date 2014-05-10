@@ -9,14 +9,15 @@ static const char GUIHCK_MOUSEAREA_SCM[] =
     "  (create-element 'mouse-area (append '(x 0 y 0 width 0 height 0) props) children))";
 static const char GUIHCK_ROW_SCM[] =
  "(define row-align-children"
- "  '(let ((x 0))"
+ "  '(let ((x 0) (spacing (get-element-property 'spacing)))"
  "    (with-children (lambda ()"
  "      (begin"
  "        (set-element-property! 'x x)"
- "        (set! x (+ x (get-element-property 'width))))))))"
+ "        (set! x (+ x spacing (get-element-property 'width))))))))"
 
  "(define row"
- "  (composite item (list 'xChanged row-align-children"
+ "  (composite item (list 'spacing 0"
+ "                        'xChanged row-align-children"
  "                        'onLoaded row-align-children)))";
 
 
