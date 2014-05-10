@@ -60,7 +60,11 @@ void guihckElementRemove(guihckContext* ctx, guihckElementId id);
 
 SCM guihckElementGetProperty(guihckContext* ctx, guihckElementId elementId, const char *key);
 void guihckElementProperty(guihckContext* ctx, guihckElementId elementId, const char* key, SCM value);
+
 guihckElementId guihckElementGetParent(guihckContext* ctx, guihckElementId elementId);
+size_t guihckElementGetChildCount(guihckContext* ctx, guihckElementId elementId);
+void guihckElementGetChildren(guihckContext* ctx, guihckElementId elementId, guihckElementId* children);
+
 
 void* guihckElementGetData(guihckContext* ctx, guihckElementId elementId);
 

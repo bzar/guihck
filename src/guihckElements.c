@@ -1,9 +1,12 @@
 #include "guihckElements.h"
 #include <stdio.h>
 
+static const char GUIHCK_ITEM_SCM[] =
+    "(define (item props . children)"
+    "  (create-element 'item (append '(x 0 y 0) props) children))";
 static const char GUIHCK_MOUSEAREA_SCM[] =
     "(define (mouse-area props . children)"
-    "  (apply create-element-with-properties (append (list 'mouse-area props) children)))";
+    "  (create-element 'mouse-area (append '(x 0 y 0 width 0 height 0) props) children))";
 
 static void initMouseArea(guihckContext* ctx, guihckElementId id, void* data);
 static void destroyMouseArea(guihckContext* ctx, guihckElementId id, void* data);
@@ -16,9 +19,17 @@ static bool mouseAreaMouseExit(guihckContext* ctx, guihckElementId id, void* dat
 
 void guihckElementsAddAllTypes(guihckContext* ctx)
 {
+  guihckElementsAddItemType(ctx);
   guihckElementsAddMouseAreaType(ctx);
+  guihckElementsAddRowType(ctx);
 }
 
+void guihckElementsAddItemType(guihckContext* ctx)
+{
+  guihckElementTypeFunctionMap functionMap = { NULL, NULL, NULL, NULL };
+  guihckElementTypeAdd(ctx, "item", functionMap, 0);
+  guihckContextExecuteScript(ctx, GUIHCK_ITEM_SCM);
+}
 
 void guihckElementsAddMouseAreaType(guihckContext* ctx)
 {
@@ -51,8 +62,9 @@ void destroyMouseArea(guihckContext* ctx, guihckElementId id, void* data)
 
 bool updateMouseArea(guihckContext* ctx, guihckElementId id, void* data)
 {
-  SCM x = guihckElementGetProperty(ctx, id, "x");
-  SCM y = guihckElementGetProperty(ctx, id, "y");
+  guihckElementUpdateAbsoluteCoordinates(ctx, id);
+  SCM x = guihckElementGetProperty(ctx, id, "absolute-x");
+  SCM y = guihckElementGetProperty(ctx, id, "absolute-y");
   SCM w = guihckElementGetProperty(ctx, id, "width");
   SCM h = guihckElementGetProperty(ctx, id, "height");
 

@@ -1,10 +1,11 @@
 #include "glhckElements.h"
+#include "guihckElementUtils.h"
 #include "glhck/glhck.h"
 #include <stdio.h>
 
 static const char GUIHCK_GLHCK_RECTANGLE_SCM[] =
     "(define (rectangle props . children)"
-    "  (apply create-element-with-properties (append (list 'rectangle props) children)))";
+    "  (create-element 'rectangle (append '(x 0 y 0 width 0 height 0 color (255 255 255)) props) children))";
 
 static void initRectangle(guihckContext* ctx, guihckElementId id, void* data);
 static void destroyRectangle(guihckContext* ctx, guihckElementId id, void* data);
@@ -46,8 +47,9 @@ void destroyRectangle(guihckContext* ctx, guihckElementId id, void* data)
 bool updateRectangle(guihckContext* ctx, guihckElementId id, void* data)
 {
   glhckObject* o = *((glhckObject**) data);
-  SCM x = guihckElementGetProperty(ctx, id, "x");
-  SCM y = guihckElementGetProperty(ctx, id, "y");
+  guihckElementUpdateAbsoluteCoordinates(ctx, id);
+  SCM x = guihckElementGetProperty(ctx, id, "absolute-x");
+  SCM y = guihckElementGetProperty(ctx, id, "absolute-y");
   SCM w = guihckElementGetProperty(ctx, id, "width");
   SCM h = guihckElementGetProperty(ctx, id, "height");
   SCM c = guihckElementGetProperty(ctx, id, "color");

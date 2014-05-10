@@ -221,6 +221,19 @@ void guihckElementProperty(guihckContext* ctx, guihckElementId elementId, const 
       {
         current->value = value;
         element->dirty = true;
+
+        // Execute change handler if defined
+        size_t changeHandlerKeySize = snprintf(NULL, 0, "%sChanged", key);
+        char* changeHandlerKey = calloc(sizeof(char), changeHandlerKeySize);
+        sprintf(changeHandlerKey, "%sChanged", key);
+        SCM changeHandler = guihckElementGetProperty(ctx, elementId, changeHandlerKey);
+        free(changeHandlerKey);
+        if(scm_is_true(scm_list_p(changeHandler)))
+        {
+          guihckContextPushElement(ctx, elementId);
+          guihckContextExecuteExpression(ctx, changeHandler);
+          guihckContextPopElement(ctx);
+        }
       }
       return;
     }
@@ -239,6 +252,18 @@ guihckElementId guihckElementGetParent(guihckContext* ctx, guihckElementId eleme
 {
   guihckElement* element = chckPoolGet(ctx->elements, elementId);
   return element->parent;
+}
+
+size_t guihckElementGetChildCount(guihckContext* ctx, guihckElementId elementId)
+{
+  guihckElement* element = chckPoolGet(ctx->elements, elementId);
+  return chckIterPoolCount(element->children) ;
+}
+
+void guihckElementGetChildren(guihckContext* ctx, guihckElementId elementId, guihckElementId* children)
+{
+  guihckElement* element = chckPoolGet(ctx->elements, elementId);
+  chckIterPoolSetCArray(element->children, children, chckIterPoolCount(element->children));
 }
 
 void* guihckElementGetData(guihckContext* ctx, guihckElementId elementId)

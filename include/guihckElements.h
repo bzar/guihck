@@ -5,6 +5,7 @@
 
 void guihckElementsAddAllTypes(guihckContext* ctx);
 
+void guihckElementsAddItemType(guihckContext* ctx);
 void guihckElementsAddMouseAreaType(guihckContext* ctx);
 
 #endif

@@ -1,4 +1,4 @@
-(create-element! 'rectangle)
+(push-new-element! 'rectangle)
 (set-element-property! 'x 200.0)
 (set-element-property! 'y 100.0)
 (set-element-property! 'width 50.0)
@@ -10,7 +10,7 @@
 
 (define (create-rectangle! x y w h c) 
   (begin 
-    (create-element! 'rectangle)
+    (push-new-element! 'rectangle)
     (set-element-property! 'x x)
     (set-element-property! 'y y)
     (set-element-property! 'width w)
@@ -25,16 +25,17 @@
                y 400
                width 25
                height 25)
-    (rectangle '(x 410
-                 y 410
+    (rectangle '(x 10
+                 y 10
                  width 10
                  height 10
                  color (255 0 0)))
-    (rectangle '(x 415
-                 y 415
+    (rectangle '(x 15
+                 y 15
                  width 10
                  height 10
-                 color (0 255 0))))
+                 color (0 255 0))
+      (rectangle '(width 5 height 5))))
   (rectangle '(x 700
                y 100
                width 25
