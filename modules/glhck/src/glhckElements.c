@@ -11,6 +11,10 @@ static const char GUIHCK_GLHCK_TEXT_SCM[] =
     "(define (text props . children)"
     "  (create-element 'text (append '(x 0 y 0 text \"\" size 12 color (255 255 255)) props) children))";
 
+static const char GUIHCK_GLHCK_IMAGE_SCM[] =
+    "(define (image props . children)"
+    "  (create-element 'image (append '(x 0 y 0 color (255 255 255) source \"\") props) children))";
+
 static void initRectangle(guihckContext* ctx, guihckElementId id, void* data);
 static void destroyRectangle(guihckContext* ctx, guihckElementId id, void* data);
 static bool updateRectangle(guihckContext* ctx, guihckElementId id, void* data);
@@ -29,10 +33,22 @@ static void destroyText(guihckContext* ctx, guihckElementId id, void* data);
 static bool updateText(guihckContext* ctx, guihckElementId id, void* data);
 static void renderText(guihckContext* ctx, guihckElementId id, void* data);
 
+typedef struct _guihckGlhckImage
+{
+  glhckObject* object;
+  char* source;
+} _guihckGlhckImage;
+
+static void initImage(guihckContext* ctx, guihckElementId id, void* data);
+static void destroyImage(guihckContext* ctx, guihckElementId id, void* data);
+static bool updateImage(guihckContext* ctx, guihckElementId id, void* data);
+static void renderImage(guihckContext* ctx, guihckElementId id, void* data);
+
 void guihckGlhckAddAllTypes(guihckContext* ctx)
 {
   guihckGlhckAddRectangleType(ctx);
   guihckGlhckAddTextType(ctx);
+  guihckGlhckAddImageType(ctx);
 }
 
 void guihckGlhckAddRectangleType(guihckContext* ctx)
@@ -212,5 +228,111 @@ bool updateText(guihckContext* ctx, guihckElementId id, void* data)
 void renderText(guihckContext* ctx, guihckElementId id, void* data)
 {
   _guihckGlhckText* d = data;
+  glhckObjectDraw(d->object);
+}
+
+void guihckGlhckAddImageType(guihckContext* ctx)
+{
+  guihckElementTypeFunctionMap functionMap = {
+    initImage,
+    destroyImage,
+    updateImage,
+    renderImage
+  };
+  guihckElementTypeAdd(ctx, "image", functionMap, sizeof(_guihckGlhckImage));
+  guihckContextExecuteScript(ctx, GUIHCK_GLHCK_IMAGE_SCM);
+}
+
+void initImage(guihckContext* ctx, guihckElementId id, void* data)
+{
+  _guihckGlhckImage* d = data;
+  d->object = glhckPlaneNew(1.0, 1.0);
+  glhckMaterial* m = glhckMaterialNew(NULL);
+  glhckObjectMaterial(d->object, m);
+  glhckMaterialFree(m);
+  d->source = NULL;
+}
+
+void destroyImage(guihckContext* ctx, guihckElementId id, void* data)
+{
+  _guihckGlhckImage* d = data;
+  glhckObjectFree(d->object);
+  if(d->source)
+    free(d->source);
+}
+
+bool updateImage(guihckContext* ctx, guihckElementId id, void* data)
+{
+  _guihckGlhckImage* d = data;
+
+  SCM source = guihckElementGetProperty(ctx, id, "source");
+
+  if(scm_is_string(source))
+  {
+    char* sourceStr = scm_to_utf8_string(source);
+    if(!d->source || strcmp(sourceStr, d->source))
+    {
+      glhckTexture* texture = glhckTextureNewFromFile(sourceStr, glhckImportDefaultImageParameters(), glhckTextureDefaultSpriteParameters());
+      glhckMaterialTexture(glhckObjectGetMaterial(d->object), texture);
+      glhckTextureFree(texture);
+      free(d->source);
+      d->source = sourceStr;
+      int textureWidth, textureHeight;
+      glhckTextureGetInformation(texture, NULL, &textureWidth, &textureHeight, NULL, NULL, NULL, NULL);
+      guihckElementProperty(ctx, id, "source-width", scm_from_double(textureWidth));
+      guihckElementProperty(ctx, id, "source-height", scm_from_double(textureHeight));
+    }
+    else
+    {
+      free(sourceStr);
+    }
+  }
+
+  float w = 0;
+  float h = 0;
+  glhckTexture* texture = glhckMaterialGetTexture(glhckObjectGetMaterial(d->object));
+  if(texture)
+  {
+    SCM width = guihckElementGetProperty(ctx, id, "width");
+    SCM height = guihckElementGetProperty(ctx, id, "height");
+    w = scm_to_double(scm_is_real(width) ? width : guihckElementGetProperty(ctx, id, "source-width"));
+    h = scm_to_double(scm_is_real(height) ? height : guihckElementGetProperty(ctx, id, "source-height"));
+  }
+
+  guihckElementUpdateAbsoluteCoordinates(ctx, id);
+  SCM x = guihckElementGetProperty(ctx, id, "absolute-x");
+  SCM y = guihckElementGetProperty(ctx, id, "absolute-y");
+
+  kmVec3 position = *glhckObjectGetPosition(d->object);
+  kmVec3 scale = *glhckObjectGetScale(d->object);
+  scale.x = w/2;
+  scale.y = h/2;
+  if(scm_is_real(x)) position.x = scm_to_double(x) + scale.x;
+  if(scm_is_real(y)) position.y = scm_to_double(y) + scale.y;
+
+  glhckObjectPosition(d->object, &position);
+  glhckObjectScale(d->object, &scale);
+
+  SCM c = guihckElementGetProperty(ctx, id, "color");
+  if(scm_to_bool(scm_list_p(c)) && scm_to_int32(scm_length(c)) == 3)
+  {
+    glhckColorb color = *glhckMaterialGetDiffuse(glhckObjectGetMaterial(d->object));
+    SCM r = scm_list_ref(c, scm_from_int8(0));
+    SCM g = scm_list_ref(c, scm_from_int8(1));
+    SCM b = scm_list_ref(c, scm_from_int8(2));
+
+    if(scm_to_bool(scm_integer_p(r))) color.r = scm_to_uint8(r);
+    if(scm_to_bool(scm_integer_p(g))) color.g = scm_to_uint8(g);
+    if(scm_to_bool(scm_integer_p(b))) color.b = scm_to_uint8(b);
+
+    glhckMaterialDiffuse(glhckObjectGetMaterial(d->object), &color);
+  }
+
+  return false;
+}
+
+void renderImage(guihckContext* ctx, guihckElementId id, void* data)
+{
+  _guihckGlhckImage* d = data;
   glhckObjectDraw(d->object);
 }

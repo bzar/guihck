@@ -7,5 +7,6 @@ void guihckGlhckAddAllTypes(guihckContext* ctx);
 
 void guihckGlhckAddRectangleType(guihckContext* ctx);
 void guihckGlhckAddTextType(guihckContext* ctx);
+void guihckGlhckAddImageType(guihckContext* ctx);
 
 #endif

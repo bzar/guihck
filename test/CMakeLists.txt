@@ -29,4 +29,5 @@ target_link_libraries(guihck-functions guihck glhck glfw ${GLFW_LIBRARIES} glfwh
 
 FILE(COPY scm DESTINATION .)
 FILE(COPY glhck-scm DESTINATION .)
+FILE(COPY img DESTINATION .)
 
