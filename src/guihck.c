@@ -7,6 +7,8 @@
 #include <string.h>
 #include <assert.h>
 
+#define GUIHCK_NO_PARENT -1
+
 // temporary
 typedef struct _guihckKeyValueMapping
 {
@@ -21,6 +23,7 @@ typedef struct _guihckContext
   chckHashTable* elementTypesByName;
   chckPool* mouseAreas;  /* should also have a quadtree for references */
   chckIterPool* stack;
+  guihckElementId rootElementId;
 } _guihckContext;
 
 typedef struct _guihckElementType
@@ -76,6 +79,11 @@ guihckContext* guihckContextNew()
   ctx->elementTypesByName = chckHashTableNew(32);
   ctx->mouseAreas = chckPoolNew(16, 16, sizeof(_guihckMouseArea));
   ctx->stack = chckIterPoolNew(16, 16, sizeof(guihckElementId));
+
+  guihckElementTypeFunctionMap rootElementFunctionMap = { NULL, NULL, NULL, NULL };
+  guihckElementTypeId rootTypeId = guihckElementTypeAdd(ctx, "root", rootElementFunctionMap, 0);
+  ctx->rootElementId = guihckElementNew(ctx, rootTypeId, GUIHCK_NO_PARENT);
+  guihckStackPushElement(ctx, ctx->rootElementId);
   return ctx;
 }
 
@@ -143,6 +151,11 @@ void guihckContextRender(guihckContext* ctx)
   }
 }
 
+guihckElementId guihckContextGetRootElement(guihckContext* ctx)
+{
+  return ctx->rootElementId;
+}
+
 guihckElementTypeId guihckElementTypeAdd(guihckContext* ctx, const char* name, guihckElementTypeFunctionMap functionMap, size_t dataSize)
 {
   chckPoolIndex iter = 0;
@@ -195,6 +208,7 @@ guihckElementId guihckElementNew(guihckContext* ctx, guihckElementTypeId typeId,
 
 void guihckElementRemove(guihckContext* ctx, guihckElementId elementId)
 {
+  assert(elementId != ctx->rootElementId && "Tried to remove root element");
   guihckElement* element = chckPoolGet(ctx->elements, elementId);
   _guihckElementType* type = chckPoolGet(ctx->elementTypes, element->type);
   if(type->functionMap.destroy)
@@ -328,16 +342,11 @@ void guihckContextExecuteScriptFile(guihckContext* ctx, const char* path)
 
 void guihckStackPushNewElement(guihckContext* ctx, const char* typeName)
 {
-  guihckElementId parentId = GUIHCK_NO_PARENT;
-  if(chckIterPoolCount(ctx->stack) > 0)
-  {
-    parentId = *((guihckElementId*) chckIterPoolGetLast(ctx->stack));
-  }
-
+  guihckElementId* parentId = chckIterPoolGetLast(ctx->stack);
   guihckElementTypeId* typeId = chckHashTableStrGet(ctx->elementTypesByName, typeName);
   assert(typeId && "Element type not found");
 
-  guihckElementId id = guihckElementNew(ctx, *typeId, parentId);
+  guihckElementId id = guihckElementNew(ctx, *typeId, *parentId);
   chckIterPoolAdd(ctx->stack, &id, NULL);
 }
 
@@ -366,7 +375,6 @@ void guihckStackPushElementById(guihckContext* ctx, const char* id)
 void guihckStackPushParentElement(guihckContext* ctx)
 {
   guihckElementId* id = chckIterPoolGetLast(ctx->stack);
-  assert(id && "Element stack is empty");
   guihckElementId parentId = guihckElementGetParent(ctx, *id);
   guihckStackPushElement(ctx, parentId);
 }
@@ -374,8 +382,6 @@ void guihckStackPushParentElement(guihckContext* ctx)
 void guihckStackPushChildElement(guihckContext* ctx, int childIndex)
 {
   guihckElementId* id = chckIterPoolGetLast(ctx->stack);
-  assert(id && "Element stack is empty");
-
   guihckElementId childId = guihckElementGetChild(ctx, *id, childIndex);
   guihckStackPushElement(ctx, childId);
 }
@@ -383,23 +389,19 @@ void guihckStackPushChildElement(guihckContext* ctx, int childIndex)
 void guihckStackPopElement(guihckContext* ctx)
 {
   size_t size = chckIterPoolCount(ctx->stack);
-  assert(size > 0 && "Element stack is empty");
+  assert(size > 1 && "Tried to pop root element from element stack");
   chckIterPoolRemove(ctx->stack, size - 1);
 }
 
 guihckElementId guihckStackGetElement(guihckContext* ctx)
 {
   guihckElementId* id = chckIterPoolGetLast(ctx->stack);
-  assert(id && "Element stack is empty");
-
   return *id;
 }
 
 SCM guihckStackGetElementProperty(guihckContext* ctx, const char* key)
 {
   guihckElementId* id = chckIterPoolGetLast(ctx->stack);
-  assert(id && "Element stack is empty");
-
   return guihckElementGetProperty(ctx, *id,  key);
 }
 
@@ -407,15 +409,12 @@ SCM guihckStackGetElementProperty(guihckContext* ctx, const char* key)
 void guihckStackElementProperty(guihckContext* ctx, const char* key, SCM value)
 {
   guihckElementId* id = chckIterPoolGetLast(ctx->stack);
-  assert(id && "Element stack is empty");
-
   return guihckElementProperty(ctx, *id,  key, value);
 }
 
 int guihckStackGetElementChildCount(guihckContext* ctx)
 {
   guihckElementId* id = chckIterPoolGetLast(ctx->stack);
-  assert(id && "Element stack is empty");
   return guihckElementGetChildCount(ctx, *id);
 }
 

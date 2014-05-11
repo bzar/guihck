@@ -29,7 +29,7 @@ int main(int argc, char** argv)
   // Trivial test for context
   guihckContext* ctx = guihckContextNew();
   guihckElementTypeId fooId = guihckElementTypeAdd(ctx, "foo", fooMap, 0);
-  guihckElementId id = guihckElementNew(ctx, fooId, GUIHCK_NO_PARENT);
+  guihckElementId id = guihckElementNew(ctx, fooId, guihckContextGetRootElement(ctx));
   guihckContextUpdate(ctx);
   guihckContextRender(ctx);
   guihckContextFree(ctx);

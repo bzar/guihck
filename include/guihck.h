@@ -12,7 +12,6 @@ typedef size_t guihckElementId;
 typedef size_t guihckElementTypeId;
 typedef size_t guihckMouseAreaId;
 
-#define GUIHCK_NO_PARENT -1
 
 typedef struct _guihckContext guihckContext;
 typedef struct _guihckElement guihckElement;
@@ -48,6 +47,8 @@ void guihckContextRender(guihckContext* ctx);
 void guihckContextMouseDown(guihckContext* ctx, float x, float y, int button);
 void guihckContextMouseUp(guihckContext* ctx, float x, float y, int button);
 void guihckContextMouseMove(guihckContext* ctx, float sx, float sy, float dx, float dy);
+
+guihckElementId guihckContextGetRootElement(guihckContext* ctx);
 
 // Element type
 
