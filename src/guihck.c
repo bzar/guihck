@@ -355,21 +355,54 @@ void guihckStackPushElement(guihckContext* ctx, guihckElementId elementId)
   chckIterPoolAdd(ctx->stack, &elementId, NULL);
 }
 
-void guihckStackPushElementById(guihckContext* ctx, const char* id)
+void guihckStackPushElementById(guihckContext* ctx, const char* idValue)
 {
-  chckPoolIndex iter = 0;
-  guihckElementId* current;
-  SCM idstr = scm_string_to_symbol(scm_from_utf8_string(id));
-  while ((current = chckPoolIter(ctx->elements, &iter)))
+  SCM idstr = scm_string_to_symbol(scm_from_utf8_string(idValue));
+
+  // Start search from current
+  guihckElementId* initialId = chckIterPoolGetLast(ctx->stack);
+
+  // First check direct parents
+  guihckElementId parentId = *initialId;
+  do
   {
-    SCM eid = guihckElementGetProperty(ctx, iter - 1, "id");
+    SCM eid = guihckElementGetProperty(ctx, parentId, "id");
     if(scm_is_true(scm_equal_p(eid, idstr)))
     {
-      guihckStackPushElement(ctx, iter - 1);
+      // Result found
+      guihckStackPushElement(ctx, parentId);
       return;
     }
+    parentId = guihckElementGetParent(ctx, parentId);
+  } while(parentId != GUIHCK_NO_PARENT);
+
+  // Search children with BFS
+  chckRingPool* queue = chckRingPoolNew(16, 16, sizeof(guihckElementId));
+  chckRingPoolPushEnd(queue, initialId);
+
+  guihckElementId* id;
+  while(id = chckRingPoolPopFirst(queue))
+  {
+    SCM eid = guihckElementGetProperty(ctx, *id, "id");
+    if(scm_is_true(scm_equal_p(eid, idstr)))
+    {
+      // Result found
+      break;
+    }
+
+    // Add children to queue
+    int i;
+    for(i = 0; i < guihckElementGetChildCount(ctx, *id); ++i)
+    {
+      guihckElementId childId = guihckElementGetChild(ctx, *id, i);
+      chckRingPoolPushEnd(queue, &childId);
+    }
   }
-  assert(false && "Could not find element with requested id");
+
+  assert(id && "Could not find element with requested id");
+
+  guihckStackPushElement(ctx, *id);
+  chckRingPoolFree(queue);
 }
 
 void guihckStackPushParentElement(guihckContext* ctx)
