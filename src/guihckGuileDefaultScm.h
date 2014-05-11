@@ -15,7 +15,7 @@ static const char GUIHCK_GUILE_DEFAULT_SCM[] =
     "      (push-new-element! type)"
     "      (set-properties! props)"
     "      (map (lambda (c) (c)) children)"
-    "      (if (list? (get-element-property 'onLoaded)) (primitive-eval (get-element-property 'onLoaded)) #t)"
+    "      (if (list? (get-element-property 'init)) (primitive-eval (get-element-property 'init)) #t)"
     "      (pop-element!))))"
 
     "(define (composite constructor default-props . default-children)"

@@ -21,8 +21,8 @@ static const char GUIHCK_ROW_SCM[] =
 
     "(define row"
     "  (composite item (list 'spacing 0"
-    "                        'xChanged row-align-children"
-    "                        'onLoaded row-align-children)))";
+    "                        'on-x row-align-children"
+    "                        'init row-align-children)))";
 static const char GUIHCK_COLUMN_SCM[] =
     "(define column-align-children"
     "  '(let ((y 0) (w 0) (spacing (get-prop! 'spacing)))"
@@ -37,8 +37,8 @@ static const char GUIHCK_COLUMN_SCM[] =
 
     "(define column"
     "  (composite item (list 'spacing 0"
-    "                        'yChanged column-align-children"
-    "                        'onLoaded column-align-children)))";
+    "                        'on-y column-align-children"
+    "                        'init column-align-children)))";
 
 
 static void initMouseArea(guihckContext* ctx, guihckElementId id, void* data);
@@ -125,7 +125,7 @@ bool updateMouseArea(guihckContext* ctx, guihckElementId id, void* data)
 }
 bool mouseAreaMouseDown(guihckContext* ctx, guihckElementId id, void* data, int button, float x, float y)
 {
-  SCM handler = guihckElementGetProperty(ctx, id, "onMouseDown");
+  SCM handler = guihckElementGetProperty(ctx, id, "on-mouse-down");
   if(scm_to_bool(scm_list_p(handler)))
   {
    guihckStackPushElement(ctx, id);
@@ -137,7 +137,7 @@ bool mouseAreaMouseDown(guihckContext* ctx, guihckElementId id, void* data, int 
 
 bool mouseAreaMouseUp(guihckContext* ctx, guihckElementId id, void* data, int button, float x, float y)
 {
-  SCM handler = guihckElementGetProperty(ctx, id, "onMouseUp");
+  SCM handler = guihckElementGetProperty(ctx, id, "on-mouse-up");
   if(scm_to_bool(scm_list_p(handler)))
   {
    guihckStackPushElement(ctx, id);
@@ -149,7 +149,7 @@ bool mouseAreaMouseUp(guihckContext* ctx, guihckElementId id, void* data, int bu
 
 bool mouseAreaMouseMove(guihckContext* ctx, guihckElementId id, void* data, float sx, float sy, float dx, float dy)
 {
-  SCM handler = guihckElementGetProperty(ctx, id, "onMouseMove");
+  SCM handler = guihckElementGetProperty(ctx, id, "on-mouse-move");
   if(scm_to_bool(scm_list_p(handler)))
   {
    guihckStackPushElement(ctx, id);
@@ -160,7 +160,7 @@ bool mouseAreaMouseMove(guihckContext* ctx, guihckElementId id, void* data, floa
 }
 bool mouseAreaMouseEnter(guihckContext* ctx, guihckElementId id, void* data, float sx, float sy, float dx, float dy)
 {
-  SCM handler = guihckElementGetProperty(ctx, id, "onMouseEnter");
+  SCM handler = guihckElementGetProperty(ctx, id, "on-mouse-enter");
   if(scm_to_bool(scm_list_p(handler)))
   {
    guihckStackPushElement(ctx, id);
@@ -171,7 +171,7 @@ bool mouseAreaMouseEnter(guihckContext* ctx, guihckElementId id, void* data, flo
 }
 bool mouseAreaMouseExit(guihckContext* ctx, guihckElementId id, void* data, float sx, float sy, float dx, float dy)
 {
-  SCM handler = guihckElementGetProperty(ctx, id, "onMouseExit");
+  SCM handler = guihckElementGetProperty(ctx, id, "on-mouse-exit");
   if(scm_to_bool(scm_list_p(handler)))
   {
    guihckStackPushElement(ctx, id);

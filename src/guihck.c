@@ -232,9 +232,9 @@ void guihckElementProperty(guihckContext* ctx, guihckElementId elementId, const 
 
   if(valueChanged)
   {
-    size_t changeHandlerKeySize = snprintf(NULL, 0, "%sChanged", key);
+    size_t changeHandlerKeySize = snprintf(NULL, 0, "on-%s", key);
     char* changeHandlerKey = calloc(sizeof(char), changeHandlerKeySize);
-    sprintf(changeHandlerKey, "%sChanged", key);
+    sprintf(changeHandlerKey, "on-%s", key);
     SCM changeHandler = guihckElementGetProperty(ctx, elementId, changeHandlerKey);
     free(changeHandlerKey);
     if(scm_is_true(scm_list_p(changeHandler)))
