@@ -143,9 +143,6 @@ bool updateText(guihckContext* ctx, guihckElementId id, void* data)
 {
   _guihckGlhckText* d = data;
 
-  guihckElementUpdateAbsoluteCoordinates(ctx, id);
-  SCM x = guihckElementGetProperty(ctx, id, "absolute-x");
-  SCM y = guihckElementGetProperty(ctx, id, "absolute-y");
   SCM textContent = guihckElementGetProperty(ctx, id, "text");
   SCM textSize = guihckElementGetProperty(ctx, id, "size");
   SCM c = guihckElementGetProperty(ctx, id, "color");
@@ -181,8 +178,12 @@ bool updateText(guihckContext* ctx, guihckElementId id, void* data)
     guihckElementProperty(ctx, id, "height", scm_from_double(h));
   }
 
+  guihckElementUpdateAbsoluteCoordinates(ctx, id);
+  SCM x = guihckElementGetProperty(ctx, id, "absolute-x");
+  SCM y = guihckElementGetProperty(ctx, id, "absolute-y");
   kmVec3 position = *glhckObjectGetPosition(d->object);
   kmVec3 scale = *glhckObjectGetScale(d->object);
+
   scale.x = w/2;
   scale.y = h/2;
   if(scm_is_real(x)) position.x = scm_to_double(x) + scale.x;

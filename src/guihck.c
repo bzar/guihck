@@ -231,8 +231,30 @@ void guihckElementRemove(guihckContext* ctx, guihckElementId elementId)
 SCM guihckElementGetProperty(guihckContext* ctx, guihckElementId elementId, const char* key)
 {
   guihckElement* element = chckPoolGet(ctx->elements, elementId);
-  SCM* value = chckHashTableStrGet(element->properties, key);
-  return value ? *value : SCM_UNDEFINED;
+  SCM* valuep = chckHashTableStrGet(element->properties, key);
+
+  if(!valuep)
+  {
+    return SCM_UNDEFINED;
+  }
+
+  SCM value = *valuep;
+
+  if(scm_is_pair(value))
+  {
+    SCM first = SCM_CAR(value);
+
+    if(scm_is_symbol(first) && scm_is_eq(first, scm_string_to_symbol(scm_from_utf8_string("bind"))))
+    {
+      // Property is a bound value; determining value
+      guihckStackPushElement(ctx, elementId);
+      SCM binding = SCM_CADR(value);
+      value = guihckContextExecuteExpression(ctx, binding);
+      guihckStackPopElement(ctx);
+    }
+  }
+
+  return value;
 }
 
 
@@ -311,17 +333,17 @@ void* guihckElementGetData(guihckContext* ctx, guihckElementId elementId)
   return element->data;
 }
 
-void guihckContextExecuteExpression(guihckContext* ctx, SCM expression)
+SCM guihckContextExecuteExpression(guihckContext* ctx, SCM expression)
 {
-  guihckGuileRunExpression(ctx, expression);
+  return guihckGuileRunExpression(ctx, expression);
 }
 
-void guihckContextExecuteScript(guihckContext* ctx, const char* script)
+SCM guihckContextExecuteScript(guihckContext* ctx, const char* script)
 {
-  guihckGuileRunScript(ctx, script);
+  return guihckGuileRunScript(ctx, script);
 }
 
-void guihckContextExecuteScriptFile(guihckContext* ctx, const char* path)
+SCM guihckContextExecuteScriptFile(guihckContext* ctx, const char* path)
 {
   FILE* file;
 
