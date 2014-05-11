@@ -240,11 +240,11 @@ SCM guihckElementGetProperty(guihckContext* ctx, guihckElementId elementId, cons
 
   SCM value = *valuep;
 
-  if(scm_is_pair(value))
+  if(scm_is_pair(value) && scm_is_symbol(SCM_CAR(value)))
   {
     SCM first = SCM_CAR(value);
 
-    if(scm_is_symbol(first) && scm_is_eq(first, scm_string_to_symbol(scm_from_utf8_string("bind"))))
+    if(scm_is_eq(first, scm_string_to_symbol(scm_from_utf8_string("bind"))))
     {
       // Property is a bound value; determining value
       guihckStackPushElement(ctx, elementId);
@@ -252,38 +252,91 @@ SCM guihckElementGetProperty(guihckContext* ctx, guihckElementId elementId, cons
       value = guihckContextExecuteExpression(ctx, binding);
       guihckStackPopElement(ctx);
     }
+    else if(scm_is_eq(first, scm_string_to_symbol(scm_from_utf8_string("alias"))))
+    {
+      // Property is an alias
+      guihckStackPushElement(ctx, elementId);
+      SCM aliasedElementExpression = SCM_CADR(value);
+      SCM aliasedElement = guihckContextExecuteExpression(ctx, aliasedElementExpression);
+      SCM aliasedKey = SCM_CADDR(value);
+
+      guihckStackPopElement(ctx);
+
+      guihckElementId aliasedElementId = scm_to_int64(aliasedElement);
+      char* aliasedKeyString = scm_to_utf8_string(scm_symbol_to_string(aliasedKey));
+      value = guihckElementGetProperty(ctx, aliasedElementId, aliasedKeyString);
+      free(aliasedKeyString);
+    }
+
+
   }
 
   return value;
 }
 
+static bool _guihckPropertyIsAnAlias(SCM value)
+{
+  return scm_is_pair(value) && scm_is_symbol(SCM_CAR(value))
+      && scm_is_eq(SCM_CAR(value), scm_string_to_symbol(scm_from_utf8_string("alias")));
+}
+
+static void _guihckElementAliasedProperty(guihckContext* ctx, guihckElementId elementId, SCM alias, SCM value)
+{
+  guihckStackPushElement(ctx, elementId);
+  SCM aliasedElementExpression = SCM_CADR(alias);
+  SCM aliasedElement = guihckContextExecuteExpression(ctx, aliasedElementExpression);
+  SCM aliasedKey = SCM_CADDR(alias);
+
+  guihckStackPopElement(ctx);
+
+  guihckElementId aliasedElementId = scm_to_int64(aliasedElement);
+  char* aliasedKeyString = scm_to_utf8_string(scm_symbol_to_string(aliasedKey));
+  guihckElementProperty(ctx, aliasedElementId, aliasedKeyString, value);
+  free(aliasedKeyString);
+}
 
 void guihckElementProperty(guihckContext* ctx, guihckElementId elementId, const char* key, SCM value)
 {
   guihckElement* element = chckPoolGet(ctx->elements, elementId);
   SCM* oldValue = chckHashTableStrGet(element->properties, key);
-  bool newValue = !oldValue;
-  bool valueChanged = !newValue && scm_is_false(scm_equal_p(*oldValue, value));
-  chckHashTableStrSet(element->properties, key, &value, sizeof(SCM));
 
-  if(valueChanged)
+  if(oldValue && scm_is_pair(*oldValue) && _guihckPropertyIsAnAlias(*oldValue))
   {
-    size_t changeHandlerKeySize = snprintf(NULL, 0, "on-%s", key);
-    char* changeHandlerKey = calloc(sizeof(char), changeHandlerKeySize);
-    sprintf(changeHandlerKey, "on-%s", key);
-    SCM changeHandler = guihckElementGetProperty(ctx, elementId, changeHandlerKey);
-    free(changeHandlerKey);
-    if(scm_is_true(scm_list_p(changeHandler)))
-    {
-      guihckStackPushElement(ctx, elementId);
-      guihckContextExecuteExpression(ctx, changeHandler);
-      guihckStackPopElement(ctx);
-    }
+    // Property is an alias, set target instead
+    _guihckElementAliasedProperty(ctx, elementId, *oldValue, value);
   }
-
-  if(newValue || valueChanged)
+  else
   {
-    guihckElementDirty(ctx, elementId);
+    bool newValue = !oldValue;
+    bool valueChanged = !newValue && scm_is_false(scm_equal_p(*oldValue, value));
+
+    if(oldValue && _guihckPropertyIsAnAlias(value))
+    {
+      // New value is an alias, set old value into target
+      _guihckElementAliasedProperty(ctx, elementId, value, *oldValue);
+    }
+
+    chckHashTableStrSet(element->properties, key, &value, sizeof(SCM));
+
+    if(valueChanged)
+    {
+      size_t changeHandlerKeySize = snprintf(NULL, 0, "on-%s", key);
+      char* changeHandlerKey = calloc(sizeof(char), changeHandlerKeySize);
+      sprintf(changeHandlerKey, "on-%s", key);
+      SCM changeHandler = guihckElementGetProperty(ctx, elementId, changeHandlerKey);
+      free(changeHandlerKey);
+      if(scm_is_true(scm_list_p(changeHandler)))
+      {
+        guihckStackPushElement(ctx, elementId);
+        guihckContextExecuteExpression(ctx, changeHandler);
+        guihckStackPopElement(ctx);
+      }
+    }
+
+    if(newValue || valueChanged)
+    {
+      guihckElementDirty(ctx, elementId);
+    }
   }
 }
 
