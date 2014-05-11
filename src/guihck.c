@@ -387,6 +387,13 @@ void guihckStackPopElement(guihckContext* ctx)
   chckIterPoolRemove(ctx->stack, size - 1);
 }
 
+guihckElementId guihckStackGetElement(guihckContext* ctx)
+{
+  guihckElementId* id = chckIterPoolGetLast(ctx->stack);
+  assert(id && "Element stack is empty");
+
+  return *id;
+}
 
 SCM guihckStackGetElementProperty(guihckContext* ctx, const char* key)
 {

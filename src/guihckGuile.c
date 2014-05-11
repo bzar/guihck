@@ -1,5 +1,6 @@
 #include "guihckGuile.h"
 #include "guihckGuileDefaultScm.h"
+#include <assert.h>
 
 #if defined(_MSC_VER)
 # define _GUIHCK_TLS __declspec(thread)
@@ -35,16 +36,19 @@ static void* registerFunction(void*);
 static void* runStringInGuile(void* data);
 static void* runExpressionInGuile(void* data);
 static SCM guilePushNewElement(SCM typeSymbol);
-static SCM guilePushElement(SCM idSymbol);
+static SCM guilePushElement(SCM elementSymbol);
+static SCM guilePushElementById(SCM idSymbol);
 static SCM guilePushParentElement();
 static SCM guilePushChildElement(SCM childIndex);
 static SCM guileSetElementProperty(SCM keySymbol, SCM value);
+static SCM guileGetElement();
 static SCM guileGetElementProperty(SCM keySymbol);
 static SCM guileGetElementChildCount();
 static SCM guilePopElement();
 
 void guihckGuileInit()
 {
+  assert(sizeof(guihckElementId) <= sizeof(scm_t_int64) && "guihckElementId type is larger than int64!");
   scm_with_guile(initGuile, NULL);
 }
 
@@ -92,10 +96,12 @@ void* initGuile(void* data)
 {
   scm_c_define_gsubr("push-new-element!", 1, 0, 0, guilePushNewElement);
   scm_c_define_gsubr("push-element!", 1, 0, 0, guilePushElement);
+  scm_c_define_gsubr("push-element-by-id!", 1, 0, 0, guilePushElementById);
   scm_c_define_gsubr("push-parent-element!", 0, 0, 0, guilePushParentElement);
   scm_c_define_gsubr("push-child-element!", 1, 0, 0, guilePushChildElement);
   scm_c_define_gsubr("pop-element!", 0, 0, 0, guilePopElement);
   scm_c_define_gsubr("set-element-property!", 2, 0, 0, guileSetElementProperty);
+  scm_c_define_gsubr("get-element", 0, 0, 0, guileGetElement);
   scm_c_define_gsubr("get-element-property", 1, 0, 0, guileGetElementProperty);
   scm_c_define_gsubr("get-element-child-count", 0, 0, 0, guileGetElementChildCount);
 
@@ -136,9 +142,22 @@ SCM guilePushNewElement(SCM typeSymbol)
   }
 }
 
-SCM guilePushElement(SCM idSymbol)
+SCM guilePushElement(SCM elementSymbol)
 {
-  if(scm_symbol_p(idSymbol))
+  if(scm_is_integer(elementSymbol))
+  {
+    guihckElementId id = scm_to_int64(elementSymbol);
+    guihckStackPushElement(threadLocalContext.ctx, id);
+    return SCM_BOOL_T;
+  }
+  else
+  {
+    return SCM_BOOL_F;
+  }
+}
+SCM guilePushElementById(SCM idSymbol)
+{
+  if(scm_is_symbol(idSymbol))
   {
     char* id = scm_to_utf8_string(scm_symbol_to_string(idSymbol));
     guihckStackPushElementById(threadLocalContext.ctx, id);
@@ -177,6 +196,12 @@ SCM guileSetElementProperty(SCM keySymbol, SCM value)
   {
     return SCM_BOOL_F;
   }
+}
+
+SCM guileGetElement()
+{
+  guihckElementId id = guihckStackGetElement(threadLocalContext.ctx);
+  return scm_from_int64(id);
 }
 
 SCM guileGetElementProperty(SCM keySymbol)

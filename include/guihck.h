@@ -88,6 +88,7 @@ void guihckStackPushElementById(guihckContext* ctx, const char* id);
 void guihckStackPushParentElement(guihckContext* ctx);
 void guihckStackPushChildElement(guihckContext* ctx, int childIndex);
 void guihckStackPopElement(guihckContext* ctx);
+guihckElementId guihckStackGetElement(guihckContext* ctx);
 SCM guihckStackGetElementProperty(guihckContext* ctx, const char *key);
 void guihckStackElementProperty(guihckContext* ctx, const char* key, SCM value);
 int guihckStackGetElementChildCount(guihckContext* ctx);
