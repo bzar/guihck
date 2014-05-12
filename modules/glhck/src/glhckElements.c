@@ -13,7 +13,7 @@ static const char GUIHCK_GLHCK_TEXT_SCM[] =
 
 static const char GUIHCK_GLHCK_IMAGE_SCM[] =
     "(define (image props . children)"
-    "  (create-element 'image (append '(x 0 y 0 color (255 255 255) source \"\") props) children))";
+    "  (create-element 'image (append '(x 0 y 0 color (255 255 255) source \"\" source-width 0 source-height 0) props) children))";
 
 static void initRectangle(guihckContext* ctx, guihckElementId id, void* data);
 static void destroyRectangle(guihckContext* ctx, guihckElementId id, void* data);
@@ -281,6 +281,7 @@ bool updateImage(guihckContext* ctx, guihckElementId id, void* data)
       glhckTextureGetInformation(texture, NULL, &textureWidth, &textureHeight, NULL, NULL, NULL, NULL);
       guihckElementProperty(ctx, id, "source-width", scm_from_double(textureWidth));
       guihckElementProperty(ctx, id, "source-height", scm_from_double(textureHeight));
+
     }
     else
     {
@@ -288,16 +289,23 @@ bool updateImage(guihckContext* ctx, guihckElementId id, void* data)
     }
   }
 
-  float w = 0;
-  float h = 0;
-  glhckTexture* texture = glhckMaterialGetTexture(glhckObjectGetMaterial(d->object));
-  if(texture)
+  SCM width = guihckElementGetProperty(ctx, id, "width");
+  SCM height = guihckElementGetProperty(ctx, id, "height");
+
+  if(!scm_is_real(width))
   {
-    SCM width = guihckElementGetProperty(ctx, id, "width");
-    SCM height = guihckElementGetProperty(ctx, id, "height");
-    w = scm_to_double(scm_is_real(width) ? width : guihckElementGetProperty(ctx, id, "source-width"));
-    h = scm_to_double(scm_is_real(height) ? height : guihckElementGetProperty(ctx, id, "source-height"));
+    width = guihckElementGetProperty(ctx, id, "source-width");
+    guihckElementProperty(ctx, id, "width", width);
   }
+
+  if(!scm_is_real(height))
+  {
+    height = guihckElementGetProperty(ctx, id, "source-height");
+    guihckElementProperty(ctx, id, "height", height);
+  }
+
+  float w = scm_is_real(width) ? scm_to_double(width) : 0;
+  float h = scm_is_real(height) ? scm_to_double(height) : 0;
 
   guihckElementUpdateAbsoluteCoordinates(ctx, id);
   SCM x = guihckElementGetProperty(ctx, id, "absolute-x");

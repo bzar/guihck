@@ -119,20 +119,13 @@ void guihckContextUpdate(guihckContext* ctx)
     {
       _guihckElementType* type = chckPoolGet(ctx->elementTypes, current->type);
       assert(type && "Invalid element type");
+      current->dirty = false;
       if(type->functionMap.update)
       {
         if(type->functionMap.update(ctx, iter - 1, current->data)) /* id = iterator - 1 */
         {
           guihckElementDirty(ctx, iter - 1);
         }
-        else
-        {
-          current->dirty = false;
-        }
-      }
-      else
-      {
-        current->dirty = false;
       }
     }
   }
@@ -435,34 +428,39 @@ void guihckStackPushElementById(guihckContext* ctx, const char* idValue)
   SCM idstr = scm_string_to_symbol(scm_from_utf8_string(idValue));
 
   // Start search from current
-  guihckElementId* initialId = chckIterPoolGetLast(ctx->stack);
-
-  // First check direct parents
-  guihckElementId parentId = *initialId;
-  do
+  guihckElementId initialId = *(guihckElementId*) chckIterPoolGetLast(ctx->stack);
+  if(scm_is_eq(guihckElementGetProperty(ctx, initialId, "id"), idstr))
   {
-    SCM eid = guihckElementGetProperty(ctx, parentId, "id");
-    if(scm_is_true(scm_equal_p(eid, idstr)))
+    // Result found
+    guihckStackPushElement(ctx, initialId);
+    return;
+  }
+
+  // Search ancestors
+  guihckElementId ancestorId = initialId;
+  while((ancestorId = guihckElementGetParent(ctx, ancestorId)) != GUIHCK_NO_PARENT)
+  {
+    if(scm_is_eq(guihckElementGetProperty(ctx, ancestorId, "id"), idstr))
     {
       // Result found
-      guihckStackPushElement(ctx, parentId);
+      guihckStackPushElement(ctx, ancestorId);
       return;
     }
-    parentId = guihckElementGetParent(ctx, parentId);
-  } while(parentId != GUIHCK_NO_PARENT);
+  }
 
   // Search children with BFS
   chckRingPool* queue = chckRingPoolNew(16, 16, sizeof(guihckElementId));
-  chckRingPoolPushEnd(queue, initialId);
+  chckRingPoolPushEnd(queue, &initialId);
 
   guihckElementId* id;
   while(id = chckRingPoolPopFirst(queue))
   {
-    SCM eid = guihckElementGetProperty(ctx, *id, "id");
-    if(scm_is_true(scm_equal_p(eid, idstr)))
+    if(scm_is_eq(guihckElementGetProperty(ctx, *id, "id"), idstr))
     {
       // Result found
-      break;
+      guihckStackPushElement(ctx, *id);
+      chckRingPoolFree(queue);
+      return;
     }
 
     // Add children to queue
@@ -473,11 +471,31 @@ void guihckStackPushElementById(guihckContext* ctx, const char* idValue)
       chckRingPoolPushEnd(queue, &childId);
     }
   }
-
-  assert(id && "Could not find element with requested id");
-
-  guihckStackPushElement(ctx, *id);
   chckRingPoolFree(queue);
+
+  // Search siblings
+  guihckElementId parentId = guihckElementGetParent(ctx, initialId);
+  if(ancestorId != GUIHCK_NO_PARENT);
+  {
+    int siblings = guihckElementGetChildCount(ctx, parentId);
+    int i;
+    for(i = 0; i < siblings; ++i)
+    {
+      guihckElementId siblingId = guihckElementGetChild(ctx, parentId, i);
+
+      if(siblingId == initialId)
+        continue;
+
+      if(scm_is_eq(guihckElementGetProperty(ctx, siblingId, "id"), idstr))
+      {
+        // Result found
+        guihckStackPushElement(ctx, siblingId);
+        return;
+      }
+    }
+  }
+
+  assert(false && "Could not find element with requested id");
 }
 
 void guihckStackPushParentElement(guihckContext* ctx)
