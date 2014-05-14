@@ -13,6 +13,9 @@ include_directories(
 add_executable(guihck-simple simple.c)
 target_link_libraries(guihck-simple guihck)
 
+add_executable(guihck-listener listener.c)
+target_link_libraries(guihck-listener guihck)
+
 add_definitions(-DGLHCK_KAZMATH_FLOAT -DUSE_SINGLE_PRECISION)
 
 add_executable(guihck-glhckElements glhckElements.c ../modules/glhck/src/glhckElements.c)

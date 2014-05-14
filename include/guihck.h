@@ -11,6 +11,7 @@ extern "C"
 typedef size_t guihckElementId;
 typedef size_t guihckElementTypeId;
 typedef size_t guihckMouseAreaId;
+typedef size_t guihckPropertyListenerId;
 
 
 typedef struct _guihckContext guihckContext;
@@ -32,6 +33,8 @@ typedef struct guihckMouseAreaFunctionMap {
   bool (*mouseEnter)(guihckContext* ctx, guihckElementId id, void* data, float sx, float sy, float dx, float dy);
   bool (*mouseExit)(guihckContext* ctx, guihckElementId id, void* data, float sx, float sy, float dx, float dy);
 } guihckMouseAreaFunctionMap;
+
+typedef void (*guihckPropertyListenerCallback)(guihckContext* ctx, guihckElementId listenerId, guihckElementId listenedId, const char* property, SCM value, void* data);
 
 // Init
 void guihckInit();
@@ -69,6 +72,10 @@ void guihckElementGetChildren(guihckContext* ctx, guihckElementId elementId, gui
 void guihckElementDirty(guihckContext* ctx, guihckElementId elementId);
 
 void* guihckElementGetData(guihckContext* ctx, guihckElementId elementId);
+
+guihckPropertyListenerId guihckElementAddListener(guihckContext* ctx, guihckElementId listenerId, guihckElementId listenedId,
+                                                  const char* propertyName, guihckPropertyListenerCallback callback, void* data);
+void guihckElementRemoveListener(guihckContext* ctx, guihckPropertyListenerId propertyListenerId);
 
 // Mouse area
 

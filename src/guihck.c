@@ -24,6 +24,7 @@ typedef struct _guihckContext
   chckPool* mouseAreas;  /* should also have a quadtree for references */
   chckIterPool* stack;
   guihckElementId rootElementId;
+  chckPool* propertyListeners;
 } _guihckContext;
 
 typedef struct _guihckElementType
@@ -42,9 +43,19 @@ typedef struct _guihckRect
 
 } _guihckRect;
 
+typedef struct _guihckPropertyListener
+{
+  guihckElementId listenerId;
+  guihckElementId listenedId;
+  char* propertyName;
+  guihckPropertyListenerCallback callback;
+  void* data;
+} _guihckPropertyListener;
+
 typedef struct _guihckProperty
 {
   SCM value;
+  chckIterPool* listeners;
 } _guihckProperty;
 
 typedef struct _guihckElement
@@ -54,6 +65,7 @@ typedef struct _guihckElement
   guihckElementId parent;
   chckIterPool* children;
   chckHashTable* properties;
+  chckIterPool* listened;
   bool dirty;
 } _guihckElement;
 
@@ -84,6 +96,7 @@ guihckContext* guihckContextNew()
   ctx->elementTypesByName = chckHashTableNew(32);
   ctx->mouseAreas = chckPoolNew(16, 16, sizeof(_guihckMouseArea));
   ctx->stack = chckIterPoolNew(16, 16, sizeof(guihckElementId));
+  ctx->propertyListeners = chckPoolNew(16, 16, sizeof(_guihckPropertyListener));
 
   guihckElementTypeFunctionMap rootElementFunctionMap = { NULL, NULL, NULL, NULL };
   guihckElementTypeId rootTypeId = guihckElementTypeAdd(ctx, "root", rootElementFunctionMap, 0);
@@ -103,10 +116,33 @@ void guihckContextFree(guihckContext* ctx)
     _guihckElementType* type = chckPoolGet(ctx->elementTypes, current->type);
     if(type->functionMap.destroy)
       type->functionMap.destroy(ctx, iter - 1, current->data); /* id = iter - 1 */
-    chckIterPoolFree(current->children);
+
+    _guihckProperty* property;
+    chckHashTableIterator pIter = {NULL, 0};
+
+    if(current->listened)
+      chckIterPoolFree(current->listened);
+
+    while(property = chckHashTableIter(current->properties, &pIter))
+    {
+      if(property->listeners)
+        chckIterPoolFree(property->listeners);
+    }
+
     chckHashTableFree(current->properties);
+    chckIterPoolFree(current->children);
     free(current->data);
   }
+
+  _guihckPropertyListener* listener;
+  iter = 0;
+  while(listener = chckPoolIter(ctx->propertyListeners, &iter))
+  {
+    free(listener->propertyName);
+    if(listener->data)
+      free(listener->data);
+  }
+  chckPoolFree(ctx->propertyListeners);
 
   chckPoolFree(ctx->mouseAreas);
   chckPoolFree(ctx->elements);
@@ -185,6 +221,7 @@ guihckElementId guihckElementNew(guihckContext* ctx, guihckElementTypeId typeId,
   element.parent = parentId;
   element.children = chckIterPoolNew(8, 8, sizeof(guihckElementId));
   element.properties = chckHashTableNew(32);
+  element.listened = NULL;
   element.dirty = true;
 
   guihckElementId id = -1;
@@ -204,23 +241,69 @@ guihckElementId guihckElementNew(guihckContext* ctx, guihckElementTypeId typeId,
   return id;
 }
 
+static void removeListeners(guihckContext* ctx, chckIterPool* pool)
+{
+  if(chckIterPoolCount(pool) > 0)
+  {
+    /* Copy listener ids before removing as modifying the pool may break iterators */
+    size_t listenedCount;
+    guihckPropertyListenerId* listenerIdsOrig = chckIterPoolToCArray(pool, &listenedCount);
+    guihckPropertyListenerId* listenerIds = calloc(listenedCount, sizeof(guihckPropertyListenerId));
+    memcpy(listenerIds, listenerIdsOrig, listenedCount * sizeof(guihckPropertyListenerId));
+
+    int i;
+    for(i = 0; i < listenedCount; ++i)
+    {
+      guihckElementRemoveListener(ctx, listenerIds[i]);
+    }
+    free(listenerIds);
+  }
+}
 
 void guihckElementRemove(guihckContext* ctx, guihckElementId elementId)
 {
   assert(elementId != ctx->rootElementId && "Tried to remove root element");
   guihckElement* element = chckPoolGet(ctx->elements, elementId);
   _guihckElementType* type = chckPoolGet(ctx->elementTypes, element->type);
+
+  /* Execute destructor */
   if(type->functionMap.destroy)
     type->functionMap.destroy(ctx, elementId, element->data);
+
+  /* Remove property listeners for listened */
+  if(element->listened)
+  {
+    removeListeners(ctx, element->listened);
+    chckIterPoolFree(element->listened);
+  }
+
+  /* Remove property listeners for listeners */
+  _guihckProperty* property;
+  chckHashTableIterator pIter = {NULL, 0};
+  while(property = chckHashTableIter(element->properties, &pIter))
+  {
+    if(property->listeners)
+    {
+      removeListeners(ctx, property->listeners);
+      chckIterPoolFree(property->listeners);
+    }
+  }
+
+  /* Remove properties */
   chckHashTableFree(element->properties);
+
+  /* Remove element data */
   if(element->data)
     free(element->data);
 
+  /* Remove children */
   chckIterPool* children = element->children; /* element may be invalidated while removing children  */
   chckPoolIndex iter = 0;
   guihckElementId* current;
   while ((current = chckIterPoolIter(children, &iter)))
+  {
     guihckElementRemove(ctx, *current);
+  }
   chckIterPoolFree(children);
 
   chckPoolRemove(ctx->elements, elementId);
@@ -318,12 +401,25 @@ void guihckElementProperty(guihckContext* ctx, guihckElementId elementId, const 
     {
       _guihckProperty newProp;
       newProp.value = value;
+      newProp.listeners = NULL;
       chckHashTableStrSet(element->properties, key, &newProp, sizeof(_guihckProperty));
     }
     else if(valueChanged)
     {
       prop->value = value;
 
+      if(prop->listeners)
+      {
+        chckPoolIndex iter = 0;
+        guihckPropertyListenerId* listenerId;
+        while(listenerId = chckIterPoolIter(prop->listeners, &iter))
+        {
+          _guihckPropertyListener* listener = chckPoolGet(ctx->propertyListeners, *listenerId);
+          listener->callback(ctx, listener->listenerId, listener->listenedId, listener->propertyName, value, listener->data);
+        }
+      }
+
+      /* TODO: implement using listeners */
       size_t changeHandlerKeySize = snprintf(NULL, 0, "on-%s", key);
       char* changeHandlerKey = calloc(sizeof(char), changeHandlerKeySize);
       sprintf(changeHandlerKey, "on-%s", key);
@@ -389,6 +485,68 @@ void* guihckElementGetData(guihckContext* ctx, guihckElementId elementId)
   guihckElement* element = chckPoolGet(ctx->elements, elementId);
   return element->data;
 }
+
+guihckPropertyListenerId guihckElementAddListener(guihckContext* ctx, guihckElementId listenerId, guihckElementId listenedId,
+                                                  const char* propertyName, guihckPropertyListenerCallback callback, void* data)
+{
+  _guihckPropertyListener propertyListener;
+  propertyListener.listenerId = listenerId;
+  propertyListener.listenedId = listenedId;
+  propertyListener.propertyName = strdup(propertyName);
+  propertyListener.callback = callback;
+  propertyListener.data = data;
+  guihckPropertyListenerId id;
+  chckPoolAdd(ctx->propertyListeners, &propertyListener, &id);
+
+  guihckElement* listenedElement = chckPoolGet(ctx->elements, listenedId);
+  _guihckProperty* property = chckHashTableStrGet(listenedElement->properties, propertyName);
+  if(!property->listeners)
+    property->listeners = chckIterPoolNew(4, 4, sizeof(guihckPropertyListenerId));
+  chckIterPoolAdd(property->listeners, &id, NULL);
+
+  guihckElement* listenerElement = chckPoolGet(ctx->elements, listenerId);
+  if(!listenerElement->listened)
+    listenerElement->listened = chckIterPoolNew(4, 4, sizeof(guihckPropertyListenerId));
+
+  chckIterPoolAdd(listenerElement->listened, &id, NULL);
+}
+
+void guihckElementRemoveListener(guihckContext* ctx, guihckPropertyListenerId propertyListenerId)
+{
+  _guihckPropertyListener* listener = chckPoolGet(ctx->propertyListeners, propertyListenerId);
+
+  if(!listener)
+    return;
+
+  guihckElement* listenedElement = chckPoolGet(ctx->elements, listener->listenedId);
+  _guihckProperty* property = chckHashTableStrGet(listenedElement->properties, listener->propertyName);
+
+  chckPoolIndex iter = 0;
+  guihckPropertyListenerId* id;
+  while((id = chckIterPoolIter(property->listeners, &iter)) && *id != propertyListenerId);
+
+  if(id)
+    chckIterPoolRemove(property->listeners, *id);
+
+  guihckElement* listenerElement = chckPoolGet(ctx->elements, listener->listenerId);
+
+  if(listenerElement)
+  {
+    iter = 0;
+    id = NULL;
+    while((id = chckIterPoolIter(listenerElement->listened, &iter)) && *id != propertyListenerId);
+
+    if(id)
+      chckIterPoolRemove(listenerElement->listened, *id);
+
+    if(listener->data)
+      free(listener->data);
+
+    free(listener->propertyName);
+  }
+  chckPoolRemove(ctx->propertyListeners, propertyListenerId);
+}
+
 
 SCM guihckContextExecuteExpression(guihckContext* ctx, SCM expression)
 {
