@@ -42,6 +42,11 @@ typedef struct _guihckRect
 
 } _guihckRect;
 
+typedef struct _guihckProperty
+{
+  SCM value;
+} _guihckProperty;
+
 typedef struct _guihckElement
 {
   guihckElementTypeId type;
@@ -225,47 +230,45 @@ void guihckElementRemove(guihckContext* ctx, guihckElementId elementId)
 SCM guihckElementGetProperty(guihckContext* ctx, guihckElementId elementId, const char* key)
 {
   guihckElement* element = chckPoolGet(ctx->elements, elementId);
-  SCM* valuep = chckHashTableStrGet(element->properties, key);
+  _guihckProperty* prop = chckHashTableStrGet(element->properties, key);
 
-  if(!valuep)
+  if(!prop)
   {
     return SCM_UNDEFINED;
   }
 
-  SCM value = *valuep;
-
-  if(scm_is_pair(value) && scm_is_symbol(SCM_CAR(value)))
+  if(scm_is_pair(prop->value) && scm_is_symbol(SCM_CAR(prop->value)))
   {
-    SCM first = SCM_CAR(value);
+    SCM first = SCM_CAR(prop->value);
 
     if(scm_is_eq(first, scm_string_to_symbol(scm_from_utf8_string("bind"))))
     {
       // Property is a bound value; determining value
       guihckStackPushElement(ctx, elementId);
-      SCM binding = SCM_CADR(value);
-      value = guihckContextExecuteExpression(ctx, binding);
+      SCM binding = SCM_CADR(prop->value);
+      prop->value = guihckContextExecuteExpression(ctx, binding);
       guihckStackPopElement(ctx);
     }
     else if(scm_is_eq(first, scm_string_to_symbol(scm_from_utf8_string("alias"))))
     {
       // Property is an alias
       guihckStackPushElement(ctx, elementId);
-      SCM aliasedElementExpression = SCM_CADR(value);
+      SCM aliasedElementExpression = SCM_CADR(prop->value);
       SCM aliasedElement = guihckContextExecuteExpression(ctx, aliasedElementExpression);
-      SCM aliasedKey = SCM_CADDR(value);
+      SCM aliasedKey = SCM_CADDR(prop->value);
 
       guihckStackPopElement(ctx);
 
       guihckElementId aliasedElementId = scm_to_int64(aliasedElement);
       char* aliasedKeyString = scm_to_utf8_string(scm_symbol_to_string(aliasedKey));
-      value = guihckElementGetProperty(ctx, aliasedElementId, aliasedKeyString);
+      prop->value = guihckElementGetProperty(ctx, aliasedElementId, aliasedKeyString);
       free(aliasedKeyString);
     }
 
 
   }
 
-  return value;
+  return prop->value;
 }
 
 static bool _guihckPropertyIsAnAlias(SCM value)
@@ -292,34 +295,41 @@ static void _guihckElementAliasedProperty(guihckContext* ctx, guihckElementId el
 void guihckElementProperty(guihckContext* ctx, guihckElementId elementId, const char* key, SCM value)
 {
   guihckElement* element = chckPoolGet(ctx->elements, elementId);
-  SCM* oldValue = chckHashTableStrGet(element->properties, key);
+  _guihckProperty* prop = chckHashTableStrGet(element->properties, key);
 
-  if(oldValue && scm_is_pair(*oldValue) && _guihckPropertyIsAnAlias(*oldValue))
+  if(prop && scm_is_pair(prop->value) && _guihckPropertyIsAnAlias(prop->value))
   {
     // Property is an alias, set target instead
-    _guihckElementAliasedProperty(ctx, elementId, *oldValue, value);
+    _guihckElementAliasedProperty(ctx, elementId, prop->value, value);
   }
   else
   {
-    bool newValue = !oldValue;
-    bool valueChanged = !newValue && scm_is_false(scm_equal_p(*oldValue, value));
+    bool newValue = !prop;
 
-    if(oldValue && _guihckPropertyIsAnAlias(value))
+    if(prop && _guihckPropertyIsAnAlias(value))
     {
       // New value is an alias, set old value into target
-      _guihckElementAliasedProperty(ctx, elementId, value, *oldValue);
+      _guihckElementAliasedProperty(ctx, elementId, value, prop->value);
     }
 
-    chckHashTableStrSet(element->properties, key, &value, sizeof(SCM));
+    bool valueChanged = !newValue && !scm_is_eq(prop->value, value);
 
-    if(valueChanged)
+    if(newValue)
     {
+      _guihckProperty newProp;
+      newProp.value = value;
+      chckHashTableStrSet(element->properties, key, &newProp, sizeof(_guihckProperty));
+    }
+    else if(valueChanged)
+    {
+      prop->value = value;
+
       size_t changeHandlerKeySize = snprintf(NULL, 0, "on-%s", key);
       char* changeHandlerKey = calloc(sizeof(char), changeHandlerKeySize);
       sprintf(changeHandlerKey, "on-%s", key);
       SCM changeHandler = guihckElementGetProperty(ctx, elementId, changeHandlerKey);
       free(changeHandlerKey);
-      if(scm_is_true(scm_list_p(changeHandler)))
+      if(scm_is_pair(changeHandler))
       {
         guihckStackPushElement(ctx, elementId);
         guihckContextExecuteExpression(ctx, changeHandler);
