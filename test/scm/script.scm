@@ -20,7 +20,7 @@
    
 (create-rectangle! 50 50 50 50 '(255 0 255))
 
-(create-elements 
+(create-elements! 
   (rectangle '(x 400
                y 400
                width 25

@@ -101,9 +101,9 @@ void* initGuile(void* data)
   scm_c_define_gsubr("push-child-element!", 1, 0, 0, guilePushChildElement);
   scm_c_define_gsubr("pop-element!", 0, 0, 0, guilePopElement);
   scm_c_define_gsubr("set-element-property!", 2, 0, 0, guileSetElementProperty);
-  scm_c_define_gsubr("get-element!", 0, 0, 0, guileGetElement);
-  scm_c_define_gsubr("get-element-property!", 1, 0, 0, guileGetElementProperty);
-  scm_c_define_gsubr("get-element-child-count!", 0, 0, 0, guileGetElementChildCount);
+  scm_c_define_gsubr("get-element", 0, 0, 0, guileGetElement);
+  scm_c_define_gsubr("get-element-property", 1, 0, 0, guileGetElementProperty);
+  scm_c_define_gsubr("get-element-child-count", 0, 0, 0, guileGetElementChildCount);
 
   scm_c_eval_string(GUIHCK_GUILE_DEFAULT_SCM);
 }

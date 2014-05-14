@@ -9,13 +9,13 @@ static const char GUIHCK_MOUSEAREA_SCM[] =
     "  (create-element 'mouse-area (append '(x 0 y 0 width 0 height 0) props) children))";
 static const char GUIHCK_ROW_SCM[] =
     "(define row-align-children"
-    "  '(let ((x 0) (h 0) (spacing (get-prop! 'spacing)))"
+    "  '(let ((x 0) (h 0) (spacing (get-prop 'spacing)))"
     "    (for-each "
     "      (lambda (child)"
     "        (set-prop! child 'x x)"
-    "        (set! x (+ x spacing (get-prop! child 'width)))"
-    "        (set! h (if (< h (get-prop! child 'height)) (get-prop! child 'height) h)))"
-    "      (children!))"
+    "        (set! x (+ x spacing (get-prop child 'width)))"
+    "        (set! h (if (< h (get-prop child 'height)) (get-prop child 'height) h)))"
+    "      (children))"
     "    (set-prop! 'height h)"
     "    (set-prop! 'width (- x spacing))))"
 
@@ -25,13 +25,13 @@ static const char GUIHCK_ROW_SCM[] =
     "                        'init row-align-children)))";
 static const char GUIHCK_COLUMN_SCM[] =
     "(define column-align-children"
-    "  '(let ((y 0) (w 0) (spacing (get-prop! 'spacing)))"
+    "  '(let ((y 0) (w 0) (spacing (get-prop 'spacing)))"
     "    (for-each "
     "      (lambda (child)"
     "        (set-prop! child 'y y)"
-    "        (set! y (+ y spacing (get-prop! child 'height)))"
-    "        (set! w (if (< w (get-prop! child 'width)) (get-prop! child 'width) w)))"
-    "      (children!))"
+    "        (set! y (+ y spacing (get-prop child 'height)))"
+    "        (set! w (if (< w (get-prop child 'width)) (get-prop child 'width) w)))"
+    "      (children))"
     "    (set-prop! 'width w)"
     "    (set-prop! 'height (- y spacing))))"
 
