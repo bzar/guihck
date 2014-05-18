@@ -92,5 +92,17 @@ static const char GUIHCK_GUILE_DEFAULT_SCM[] =
     "        (let ((result (reverse! (iter 0 '()))))"
     "          (pop-element!)"
     "          result)))))"
+
+    "(define (observe . vals)"
+    "  (define (resolve e)"
+    "    (cond ((eq? e 'parent) (parent))"
+    "          ((eq? e 'this) (this))"
+    "          (else (find-element e))))"
+    "  (define (iter lst result)"
+    "    (if (null? lst)"
+    "      result"
+    "      (iter (cddr lst) "
+    "            (cons (cons (resolve (car lst)) (cadr lst)) result))))"
+    "  (iter vals '()))"
     ;
 #endif // GUIHCKGUILEDEFAULTSCM_H

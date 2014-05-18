@@ -1,17 +1,5 @@
 (import (rnrs (6)))
 
-(define (observe . vals)
-  (define (resolve e)
-    (cond ((eq? e 'parent) (parent))
-          ((eq? e 'this) (this))
-          (else (find-element e))))
-  (define (iter lst result)
-    (if (null? lst)
-      result
-      (iter (cddr lst) 
-            (cons (cons (resolve (car lst)) (cadr lst)) result))))
-  (iter vals '()))
-
 (create-elements!
   (item '(id item-1 value 1))
   (item '(id item-2 
