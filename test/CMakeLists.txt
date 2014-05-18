@@ -16,6 +16,9 @@ target_link_libraries(guihck-simple guihck)
 add_executable(guihck-listener listener.c)
 target_link_libraries(guihck-listener guihck)
 
+add_executable(guihck-cli-run cli-run.c)
+target_link_libraries(guihck-cli-run guihck)
+
 add_definitions(-DGLHCK_KAZMATH_FLOAT -DUSE_SINGLE_PRECISION)
 
 add_executable(guihck-glhckElements glhckElements.c ../modules/glhck/src/glhckElements.c)
@@ -32,5 +35,6 @@ target_link_libraries(guihck-functions guihck glhck glfw ${GLFW_LIBRARIES} glfwh
 
 FILE(COPY scm DESTINATION .)
 FILE(COPY glhck-scm DESTINATION .)
+FILE(COPY cli-scm DESTINATION .)
 FILE(COPY img DESTINATION .)
 

@@ -41,6 +41,7 @@ static SCM guilePushElementById(SCM idSymbol);
 static SCM guilePushParentElement();
 static SCM guilePushChildElement(SCM childIndex);
 static SCM guileSetElementProperty(SCM keySymbol, SCM value);
+static SCM guileAddPropertyListener(SCM elementSymbol, SCM keySymbol, SCM callback);
 static SCM guileGetElement();
 static SCM guileGetElementProperty(SCM keySymbol);
 static SCM guileGetElementChildCount();
@@ -48,7 +49,7 @@ static SCM guilePopElement();
 
 void guihckGuileInit()
 {
-  assert(sizeof(guihckElementId) <= sizeof(scm_t_int64) && "guihckElementId type is larger than int64!");
+  assert(sizeof(guihckElementId) <= sizeof(scm_t_uint64) && "guihckElementId type is larger than uint64!");
   scm_with_guile(initGuile, NULL);
 }
 
@@ -146,7 +147,7 @@ SCM guilePushElement(SCM elementSymbol)
 {
   if(scm_is_integer(elementSymbol))
   {
-    guihckElementId id = scm_to_int64(elementSymbol);
+    guihckElementId id = scm_to_uint64(elementSymbol);
     guihckStackPushElement(threadLocalContext.ctx, id);
     return SCM_BOOL_T;
   }
@@ -201,7 +202,7 @@ SCM guileSetElementProperty(SCM keySymbol, SCM value)
 SCM guileGetElement()
 {
   guihckElementId id = guihckStackGetElement(threadLocalContext.ctx);
-  return scm_from_int64(id);
+  return scm_from_uint64(id);
 }
 
 SCM guileGetElementProperty(SCM keySymbol)
