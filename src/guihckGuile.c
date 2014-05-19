@@ -124,6 +124,7 @@ void* runExpressionInGuile(void* data)
 {
   SCM expression = data;
   scm_gc_protect_object(expression);
+  //printf("EXPR: %s\n", scm_to_utf8_string(scm_object_to_string(expression, SCM_UNDEFINED)));
   SCM result = scm_primitive_eval(expression);
   scm_gc_unprotect_object(expression);
   return result;

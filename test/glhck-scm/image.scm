@@ -1,12 +1,12 @@
 (create-elements!
   (row '()
     (image '(id img-1 source "img/infantry_1.png"
-             width (bind (get-prop 'source-width))
-             height (bind (get-prop 'source-height))))
+             width (bind (observe 'this 'source-width) identity)
+             height (bind (observe 'this 'source-height) identity)))
     (image '(id img-2 source "img/infantry_1.png" 
-             width (bind (* 2 (get-prop (find-element 'img-1) 'width))) 
-             height (bind (* 2 (get-prop (find-element 'img-1) 'height)))))
+             width (bind (observe 'img-1 'width) (lambda (w) (* w 2)))
+             height (bind (observe 'img-1 'height) (lambda (h) (* h 2)))))
     (image '(id img-3 source "img/infantry_1.png" 
-             width (bind (* 2 (get-prop (find-element 'img-2) 'width))) 
-             height (bind (* 2 (get-prop (find-element 'img-2) 'height)))))))
+             width (bind  (observe 'img-2 'height) (lambda (w) (* w 2)))
+             height (bind  (observe 'img-2 'height) (lambda (h) (* h 2)))))))
  

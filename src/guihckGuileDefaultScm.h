@@ -43,7 +43,7 @@ static const char GUIHCK_GUILE_DEFAULT_SCM[] =
     "        (pop-element!)"
     "        value))))"
 
-    "(define this! get-element)"
+    "(define this get-element)"
 
     "(define (find-element id)"
     "  (begin"

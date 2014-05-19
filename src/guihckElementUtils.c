@@ -12,8 +12,8 @@ void guihckElementUpdateAbsoluteCoordinates(guihckContext* ctx, guihckElementId 
   {
     SCM xProperty = guihckElementGetProperty(ctx, id, "x");
     SCM yProperty = guihckElementGetProperty(ctx, id, "y");
-    x += scm_is_true(scm_real_p(xProperty)) ? scm_to_double(xProperty) : 0;
-    y += scm_is_true(scm_real_p(yProperty)) ? scm_to_double(yProperty) : 0;
+    x += xProperty && scm_is_real(xProperty) ? scm_to_double(xProperty) : 0;
+    y += yProperty && scm_is_real(yProperty) ? scm_to_double(yProperty) : 0;
     id = guihckElementGetParent(ctx, id);
   }
   while(id != rootId);
