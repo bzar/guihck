@@ -4,5 +4,6 @@
 #include "guihck.h"
 
 void guihckElementUpdateAbsoluteCoordinates(guihckContext* ctx, guihckElementId elementId);
+void guihckElementAddParentPositionListeners(guihckContext* ctx, guihckElementId id);
 
 #endif

@@ -14,16 +14,15 @@ static const char GUIHCK_ROW_SCM[] =
     "      (lambda (child)"
     "        (set-prop! child 'x x)"
     "        (set! x (+ x spacing (get-prop child 'width))))"
-    "      (children))"
+    "      (get-prop 'children))"
     "    (set-prop! 'width (- x spacing))))"
 
     "(define (row-align-height h) "
-    "  (set-prop! 'height (if (> h (get-prop 'height))"
-    "    h"
+    "  (set-prop! 'height"
     "    (apply max "
     "      (cons 0 (map "
     "        (lambda (c) (get-prop c 'height)) "
-    "        (get-prop 'children)))))))"
+    "        (get-prop 'children))))))"
 
     "(define (row-update-bindings cs)"
     "  (let ((previous (get-prop 'listeners)))"
@@ -42,7 +41,7 @@ static const char GUIHCK_ROW_SCM[] =
     "  (composite item (list 'spacing 0"
     "                        'init '(begin"
     "                          (bind 'spacing row-align-width)"
-    "                          (row-update-bindings (children)))"
+    "                          (row-align-width 0))"
     "                        'listeners '(bind (observe 'this 'children) row-update-bindings))))"
     ;
 
@@ -53,16 +52,15 @@ static const char GUIHCK_COLUMN_SCM[] =
     "      (lambda (child)"
     "        (set-prop! child 'y y)"
     "        (set! y (+ y spacing (get-prop child 'height))))"
-    "      (children))"
+    "      (get-prop 'children))"
     "    (set-prop! 'height (- y spacing))))"
 
     "(define (column-align-width w) "
-    "  (set-prop! 'width (if (> w (get-prop 'width))"
-    "    w"
+    "  (set-prop! 'width"
     "    (apply max "
     "      (cons 0 (map "
     "        (lambda (c) (get-prop c 'width)) "
-    "        (get-prop 'children)))))))"
+    "        (get-prop 'children))))))"
 
     "(define (column-update-bindings cs)"
     "  (let ((previous (get-prop 'listeners)))"
@@ -80,12 +78,13 @@ static const char GUIHCK_COLUMN_SCM[] =
     "(define column"
     "  (composite item (list 'spacing 0"
     "                        'init '(begin"
-    "                          (bind 'spacing row-align-height)"
-    "                          (column-update-bindings (children)))"
+    "                          (bind 'spacing column-align-height)"
+    "                          (column-align-height 0))"
     "                        'listeners '(bind (observe 'this 'children) column-update-bindings))))"
     ;
 
 
+static void initItem(guihckContext* ctx, guihckElementId id, void* data);
 static void initMouseArea(guihckContext* ctx, guihckElementId id, void* data);
 static void destroyMouseArea(guihckContext* ctx, guihckElementId id, void* data);
 static bool updateMouseArea(guihckContext* ctx, guihckElementId id, void* data);
@@ -105,7 +104,7 @@ void guihckElementsAddAllTypes(guihckContext* ctx)
 
 void guihckElementsAddItemType(guihckContext* ctx)
 {
-  guihckElementTypeFunctionMap functionMap = { NULL, NULL, NULL, NULL };
+  guihckElementTypeFunctionMap functionMap = { initItem, NULL, NULL, NULL };
   guihckElementTypeAdd(ctx, "item", functionMap, 0);
   guihckContextExecuteScript(ctx, GUIHCK_ITEM_SCM);
 }
@@ -131,6 +130,11 @@ void guihckElementsAddColumnType(guihckContext* ctx)
   guihckContextExecuteScript(ctx, GUIHCK_COLUMN_SCM);
 }
 
+void initItem(guihckContext* ctx, guihckElementId id, void* data)
+{
+  guihckElementAddParentPositionListeners(ctx, id);
+}
+
 void initMouseArea(guihckContext* ctx, guihckElementId id, void* data)
 {
   guihckMouseAreaFunctionMap functionMap = {
@@ -141,6 +145,7 @@ void initMouseArea(guihckContext* ctx, guihckElementId id, void* data)
     mouseAreaMouseExit
   };
   *((guihckMouseAreaId*) data) = guihckMouseAreaNew(ctx, id, functionMap);
+  guihckElementAddParentPositionListeners(ctx, id);
 }
 
 void destroyMouseArea(guihckContext* ctx, guihckElementId id, void* data)
@@ -150,7 +155,6 @@ void destroyMouseArea(guihckContext* ctx, guihckElementId id, void* data)
 
 bool updateMouseArea(guihckContext* ctx, guihckElementId id, void* data)
 {
-  guihckElementUpdateAbsoluteCoordinates(ctx, id);
   SCM x = guihckElementGetProperty(ctx, id, "absolute-x");
   SCM y = guihckElementGetProperty(ctx, id, "absolute-y");
   SCM w = guihckElementGetProperty(ctx, id, "width");

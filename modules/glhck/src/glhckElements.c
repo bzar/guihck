@@ -71,6 +71,7 @@ void initRectangle(guihckContext* ctx, guihckElementId id, void* data)
   glhckMaterialFree(m);
 
   *((glhckObject**) data) = o;
+  guihckElementAddParentPositionListeners(ctx, id);
 }
 
 void destroyRectangle(guihckContext* ctx, guihckElementId id, void* data)
@@ -81,7 +82,6 @@ void destroyRectangle(guihckContext* ctx, guihckElementId id, void* data)
 bool updateRectangle(guihckContext* ctx, guihckElementId id, void* data)
 {
   glhckObject* o = *((glhckObject**) data);
-  guihckElementUpdateAbsoluteCoordinates(ctx, id);
   SCM x = guihckElementGetProperty(ctx, id, "absolute-x");
   SCM y = guihckElementGetProperty(ctx, id, "absolute-y");
   SCM w = guihckElementGetProperty(ctx, id, "width");
@@ -143,6 +143,7 @@ void initText(guihckContext* ctx, guihckElementId id, void* data)
   glhckObjectMaterial(d->object, m);
   glhckMaterialFree(m);
   d->content = NULL;
+  guihckElementAddParentPositionListeners(ctx, id);
 }
 
 void destroyText(guihckContext* ctx, guihckElementId id, void* data)
@@ -194,7 +195,6 @@ bool updateText(guihckContext* ctx, guihckElementId id, void* data)
     guihckElementProperty(ctx, id, "height", scm_from_double(h));
   }
 
-  guihckElementUpdateAbsoluteCoordinates(ctx, id);
   SCM x = guihckElementGetProperty(ctx, id, "absolute-x");
   SCM y = guihckElementGetProperty(ctx, id, "absolute-y");
   kmVec3 position = *glhckObjectGetPosition(d->object);
@@ -251,6 +251,7 @@ void initImage(guihckContext* ctx, guihckElementId id, void* data)
   glhckObjectMaterial(d->object, m);
   glhckMaterialFree(m);
   d->source = NULL;
+  guihckElementAddParentPositionListeners(ctx, id);
 }
 
 void destroyImage(guihckContext* ctx, guihckElementId id, void* data)
@@ -307,7 +308,6 @@ bool updateImage(guihckContext* ctx, guihckElementId id, void* data)
   float w = scm_is_real(width) ? scm_to_double(width) : 0;
   float h = scm_is_real(height) ? scm_to_double(height) : 0;
 
-  guihckElementUpdateAbsoluteCoordinates(ctx, id);
   SCM x = guihckElementGetProperty(ctx, id, "absolute-x");
   SCM y = guihckElementGetProperty(ctx, id, "absolute-y");
 
