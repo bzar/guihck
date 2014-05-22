@@ -2,6 +2,9 @@
 #define GUIHCKGUILEDEFAULTSCM_H
 
 static const char GUIHCK_GUILE_DEFAULT_SCM[] =
+
+    "(define (flatmap f xs) (apply append (map f xs)))"
+
     "(define (create-elements! . elements)"
     "  (map (lambda (e) (e)) elements))"
 
@@ -104,5 +107,13 @@ static const char GUIHCK_GUILE_DEFAULT_SCM[] =
     "      (iter (cddr lst) "
     "            (cons (cons (resolve (car lst)) (cadr lst)) result))))"
     "  (iter vals '()))"
+
+    "(define bind"
+    "  (case-lambda"
+    "    ((property callback) (bind (this) property callback))"
+    "    ((element property callback)"
+    "      (add-element-property-listener! element property callback))))"
+
+    "(define unbind remove-element-property-listener!)"
     ;
 #endif // GUIHCKGUILEDEFAULTSCM_H

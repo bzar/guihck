@@ -35,6 +35,7 @@ typedef struct guihckMouseAreaFunctionMap {
 } guihckMouseAreaFunctionMap;
 
 typedef void (*guihckPropertyListenerCallback)(guihckContext* ctx, guihckElementId listenerId, guihckElementId listenedId, const char* property, SCM value, void* data);
+typedef void (*guihckPropertyListenerFreeCallback)(guihckContext* ctx, guihckElementId listenerId, guihckElementId listenedId, const char* property, SCM value, void* data);
 
 // Init
 void guihckInit();
@@ -74,7 +75,8 @@ void guihckElementDirty(guihckContext* ctx, guihckElementId elementId);
 void* guihckElementGetData(guihckContext* ctx, guihckElementId elementId);
 
 guihckPropertyListenerId guihckElementAddListener(guihckContext* ctx, guihckElementId listenerId, guihckElementId listenedId,
-                                                  const char* propertyName, guihckPropertyListenerCallback callback, void* data);
+                                                  const char* propertyName, guihckPropertyListenerCallback callback, void* data,
+                                                  guihckPropertyListenerFreeCallback freeCallback);
 void guihckElementRemoveListener(guihckContext* ctx, guihckPropertyListenerId propertyListenerId);
 
 // Mouse area

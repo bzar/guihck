@@ -41,7 +41,8 @@ static SCM guilePushElementById(SCM idSymbol);
 static SCM guilePushParentElement();
 static SCM guilePushChildElement(SCM childIndex);
 static SCM guileSetElementProperty(SCM keySymbol, SCM value);
-static SCM guileAddPropertyListener(SCM elementSymbol, SCM keySymbol, SCM callback);
+static SCM guileAddPropertyListener(SCM element, SCM keySymbol, SCM callback);
+static SCM guileRemovePropertyListener(SCM listener);
 static SCM guileGetElement();
 static SCM guileGetElementProperty(SCM keySymbol);
 static SCM guileGetElementChildCount();
@@ -102,6 +103,8 @@ void* initGuile(void* data)
   scm_c_define_gsubr("push-child-element!", 1, 0, 0, guilePushChildElement);
   scm_c_define_gsubr("pop-element!", 0, 0, 0, guilePopElement);
   scm_c_define_gsubr("set-element-property!", 2, 0, 0, guileSetElementProperty);
+  scm_c_define_gsubr("add-element-property-listener!", 3, 0, 0, guileAddPropertyListener);
+  scm_c_define_gsubr("remove-element-property-listener!", 1, 0, 0, guileRemovePropertyListener);
   scm_c_define_gsubr("get-element", 0, 0, 0, guileGetElement);
   scm_c_define_gsubr("get-element-property", 1, 0, 0, guileGetElementProperty);
   scm_c_define_gsubr("get-element-child-count", 0, 0, 0, guileGetElementChildCount);
@@ -123,16 +126,18 @@ void* runStringInGuile(void* data)
 void* runExpressionInGuile(void* data)
 {
   SCM expression = data;
-  scm_gc_protect_object(expression);
-  //printf("EXPR: %s\n", scm_to_utf8_string(scm_object_to_string(expression, SCM_UNDEFINED)));
+#if 0
+  char* expressionStr = scm_to_utf8_string(scm_object_to_string(expression, SCM_UNDEFINED));
+  printf("EXPR: %s\n", expressionStr);
+  free(expressionStr);
+#endif
   SCM result = scm_primitive_eval(expression);
-  scm_gc_unprotect_object(expression);
   return result;
 }
 
 SCM guilePushNewElement(SCM typeSymbol)
 {
-  if(scm_symbol_p(typeSymbol))
+  if(scm_is_symbol(typeSymbol))
   {
     char* typeName = scm_to_utf8_string(scm_symbol_to_string(typeSymbol));
     guihckStackPushNewElement(threadLocalContext.ctx, typeName);
@@ -188,16 +193,49 @@ SCM guilePushChildElement(SCM childIndex)
 
 SCM guileSetElementProperty(SCM keySymbol, SCM value)
 {
-  if(scm_symbol_p(keySymbol))
+  if(scm_is_symbol(keySymbol))
   {
     char* key = scm_to_utf8_string(scm_symbol_to_string(keySymbol));
     guihckStackElementProperty(threadLocalContext.ctx, key, value);
+    free(key);
     return SCM_BOOL_T;
   }
   else
   {
     return SCM_BOOL_F;
   }
+}
+
+static void guilePropertyListenerCallback(guihckContext* ctx, guihckElementId listenerId, guihckElementId listenedId, const char* property, SCM value, void* data)
+{
+  guihckStackPushElement(ctx, listenerId);
+  SCM callback = data;
+  guihckGuileRunExpression(ctx, scm_list_2(callback, value));
+  guihckStackPopElement(ctx);
+
+}
+
+static void guilePropertyListenerFreeCallback(guihckContext* ctx, guihckElementId listenerId, guihckElementId listenedId, const char* property, SCM value, void* data)
+{
+  SCM callback = data;
+  scm_gc_unprotect_object(callback);
+}
+
+static SCM guileAddPropertyListener(SCM element, SCM keySymbol, SCM callback)
+{
+  char* key = scm_to_utf8_string(scm_symbol_to_string(keySymbol));
+  guihckElementId listenerId = guihckStackGetElement(threadLocalContext.ctx);
+  guihckPropertyListenerId id = guihckElementAddListener(threadLocalContext.ctx, listenerId, scm_to_uint64(element), key,
+                                                         guilePropertyListenerCallback, callback, guilePropertyListenerFreeCallback);
+  scm_gc_protect_object(callback);
+  free(key);
+  return scm_from_uint64(id);
+}
+
+static SCM guileRemovePropertyListener(SCM listener)
+{
+  guihckElementRemoveListener(threadLocalContext.ctx, scm_to_uint64(listener));
+  return SCM_BOOL_T;
 }
 
 SCM guileGetElement()
@@ -208,7 +246,7 @@ SCM guileGetElement()
 
 SCM guileGetElementProperty(SCM keySymbol)
 {
-  if(scm_symbol_p(keySymbol))
+  if(scm_is_symbol(keySymbol))
   {
     char* key = scm_to_utf8_string(scm_symbol_to_string(keySymbol));
     return guihckStackGetElementProperty(threadLocalContext.ctx, key);

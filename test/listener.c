@@ -28,11 +28,11 @@ int main(int argc, char** argv)
   guihckElementProperty(ctx, id4, "bar", scm_from_int8(0));
 
   printf("Element %d listens to element %d\n", id2, id1);
-  guihckElementAddListener(ctx, id2, id1, "bar", callback, NULL);
+  guihckElementAddListener(ctx, id2, id1, "bar", callback, NULL, NULL);
   printf("Element %d listens to element %d\n", id3, id2);
-  guihckElementAddListener(ctx, id3, id2, "bar", callback, NULL);
+  guihckElementAddListener(ctx, id3, id2, "bar", callback, NULL, NULL);
   printf("Element %d listens to element %d\n", id4, id3);
-  guihckElementAddListener(ctx, id4, id3, "bar", callback, NULL);
+  guihckElementAddListener(ctx, id4, id3, "bar", callback, NULL, NULL);
 
   guihckElementProperty(ctx,  id1, "bar", scm_from_int8(1));
   guihckContextFree(ctx);

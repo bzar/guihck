@@ -49,6 +49,10 @@ expressed as quoted lists. For example, the mouse area element has a special pro
 "on-mouse-down", which determines the action taken when a mouse button is pressed on top
 of the mouse area element.
 
+Every property has a special change handler procedure property. Their names have the 
+form of "on-<property name>". For example, the change handler procedure property for
+"x" is "on-x".
+
 Elements may have a value for the special "id" property that can be used in locating them.
 Whenever the an element is searched, the search is started from the current element.
 If the current element does not match the searched id, the element's direct ancestors
@@ -96,14 +100,14 @@ in either the generic guihckElements or the glhck-specific guihckGlhck module.
       (composite rectangle '(width 64
                             height 32
                             color (240 240 240)
-                            on-clicked (alias (find-element 'mouse-area) 'on-mouse-down))
+                            on-clicked (alias (find-element 'mouse-area) on-mouse-down))
         (text '(text "Button!" 
-                x (bind (observe 'this 'width 'parent 'width) (lambda (w pw) (/ (- pw w) 2)))
-                y (bind (observe 'this 'height 'parent 'height) (lambda (w pw) (/ (- ph h) 2)))
+                x (bind (/ (- (get-prop (parent) 'width) (get-prop 'width)) 2))
+                y (bind (/ (- (get-prop (parent) 'height) (get-prop 'height)) 2)) 
                 color (24 24 24)))
         (mouse-area '(id mouse-area
-                      width (bind (observe 'parent 'width) identity)
-                      height (bind (observe 'parent 'height) identity)
+                      width (bind (get-prop (parent) 'width))
+                      height (bind (get-prop (parent) 'height))
                       on-mouse-down (set-prop! (parent) 'color '(255 255 255))
                       on-mouse-up (set-prop! (parent) 'color '(240 240 240))))))
 
