@@ -76,6 +76,9 @@ void initRectangle(guihckContext* ctx, guihckElementId id, void* data)
 
 void destroyRectangle(guihckContext* ctx, guihckElementId id, void* data)
 {
+  (void) ctx;
+  (void) id;
+
   glhckObjectFree(*((glhckObject**) data));
 }
 
@@ -117,6 +120,9 @@ bool updateRectangle(guihckContext* ctx, guihckElementId id, void* data)
 
 void renderRectangle(guihckContext* ctx, guihckElementId id, void* data)
 {
+  (void) ctx;
+  (void) id;
+
   glhckObjectDraw(*((glhckObject**) data));
 }
 
@@ -148,6 +154,9 @@ void initText(guihckContext* ctx, guihckElementId id, void* data)
 
 void destroyText(guihckContext* ctx, guihckElementId id, void* data)
 {
+  (void) ctx;
+  (void) id;
+
   _guihckGlhckText* d = data;
   glhckTextFontFree(d->text, d->font);
   glhckTextFree(d->text);
@@ -227,6 +236,9 @@ bool updateText(guihckContext* ctx, guihckElementId id, void* data)
 
 void renderText(guihckContext* ctx, guihckElementId id, void* data)
 {
+  (void) ctx;
+  (void) id;
+
   _guihckGlhckText* d = data;
   glhckObjectDraw(d->object);
 }
@@ -256,6 +268,9 @@ void initImage(guihckContext* ctx, guihckElementId id, void* data)
 
 void destroyImage(guihckContext* ctx, guihckElementId id, void* data)
 {
+  (void) ctx;
+  (void) id;
+
   _guihckGlhckImage* d = data;
   glhckObjectFree(d->object);
   if(d->source)
@@ -341,6 +356,9 @@ bool updateImage(guihckContext* ctx, guihckElementId id, void* data)
 
 void renderImage(guihckContext* ctx, guihckElementId id, void* data)
 {
+  (void) ctx;
+  (void) id;
+
   _guihckGlhckImage* d = data;
   glhckObjectDraw(d->object);
 }

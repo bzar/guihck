@@ -24,6 +24,11 @@ void guihckElementUpdateAbsoluteCoordinates(guihckContext* ctx, guihckElementId 
 
 static void updateAbsoluteX(guihckContext* ctx, guihckElementId listenerId, guihckElementId listenedId, const char* property, SCM value, void* data)
 {
+  (void) listenedId;
+  (void) property;
+  (void) value;
+  (void) data;
+
   guihckElementId parent = guihckElementGetParent(ctx, listenerId);
   SCM x = guihckElementGetProperty(ctx, listenerId, "x");
   SCM pax = guihckElementGetProperty(ctx, parent, "absolute-x");
@@ -37,6 +42,11 @@ static void updateAbsoluteX(guihckContext* ctx, guihckElementId listenerId, guih
 }
 static void updateAbsoluteY(guihckContext* ctx, guihckElementId listenerId, guihckElementId listenedId, const char* property, SCM value, void* data)
 {
+  (void) listenedId;
+  (void) property;
+  (void) value;
+  (void) data;
+
   guihckElementId parent = guihckElementGetParent(ctx, listenerId);
   SCM y = guihckElementGetProperty(ctx, listenerId, "y");
   SCM pay = guihckElementGetProperty(ctx, parent, "absolute-y");

@@ -12,6 +12,8 @@ char RUNNING = 1;
 
 void windowCloseCallback(GLFWwindow* window)
 {
+  (void) window;
+
   RUNNING = 0;
 }
 

@@ -6,8 +6,9 @@
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
+#include <stdint.h>
 
-#define GUIHCK_NO_PARENT -1
+#define GUIHCK_NO_PARENT SIZE_MAX
 
 typedef struct _guihckContext
 {
@@ -128,7 +129,7 @@ void guihckContextFree(guihckContext* ctx)
 {
   chckPoolIndex iter = 0;
   _guihckPropertyListener* listener;
-  while(listener = chckPoolIter(ctx->propertyListeners, &iter))
+  while((listener = chckPoolIter(ctx->propertyListeners, &iter)))
   {
     if(listener->freeCallback)
       listener->freeCallback(ctx, listener->listenerId, listener->listenedId, listener->propertyName, SCM_UNDEFINED, listener->data);
@@ -149,7 +150,7 @@ void guihckContextFree(guihckContext* ctx)
 
     _guihckProperty* property;
     chckHashTableIterator pIter = {NULL, 0};
-    while(property = chckHashTableIter(current->properties, &pIter))
+    while((property = chckHashTableIter(current->properties, &pIter)))
     {
       if(property->listeners)
         chckIterPoolFree(property->listeners);
@@ -295,7 +296,7 @@ static void removeListeners(guihckContext* ctx, chckIterPool* pool)
     guihckPropertyListenerId* listenerIds = calloc(listenedCount, sizeof(guihckPropertyListenerId));
     memcpy(listenerIds, listenerIdsOrig, listenedCount * sizeof(guihckPropertyListenerId));
 
-    int i;
+    unsigned int i;
     for(i = 0; i < listenedCount; ++i)
     {
       guihckElementRemoveListener(ctx, listenerIds[i]);
@@ -324,7 +325,7 @@ void guihckElementRemove(guihckContext* ctx, guihckElementId elementId)
 
   _guihckProperty* property;
   chckHashTableIterator pIter = {NULL, 0};
-  while(property = chckHashTableIter(element->properties, &pIter))
+  while((property = chckHashTableIter(element->properties, &pIter)))
   {
     /* Remove property listeners for listeners */
     if(property->listeners)
@@ -341,7 +342,7 @@ void guihckElementRemove(guihckContext* ctx, guihckElementId elementId)
     {
       _guihckBoundProperty* bound;
       chckPoolIndex bIter = 0;
-      while(bound = chckIterPoolIter(property->bind.bound, &bIter))
+      while((bound = chckIterPoolIter(property->bind.bound, &bIter)))
       {
         guihckElementRemoveListener(ctx, bound->listenerId);
         bound->value = SCM_UNDEFINED;
@@ -422,7 +423,7 @@ static void _guihckElementPropertyNotifyListeners(guihckContext* ctx, _guihckPro
   {
     chckPoolIndex iter = 0;
     guihckPropertyListenerId* listenerId;
-    while(listenerId = chckIterPoolIter(property->listeners, &iter))
+    while((listenerId = chckIterPoolIter(property->listeners, &iter)))
     {
       _guihckPropertyListener* listener = chckPoolGet(ctx->propertyListeners, *listenerId);
       listener->callback(ctx, listener->listenerId, listener->listenedId, listener->propertyName, property->value, listener->data);
@@ -432,6 +433,9 @@ static void _guihckElementPropertyNotifyListeners(guihckContext* ctx, _guihckPro
 
 static void _guihckPropertyAliasListenerCallback(guihckContext* ctx, guihckElementId listenerId, guihckElementId listenedId, const char* property, SCM value, void* data)
 {
+  (void) listenedId;
+  (void) property;
+
   char* key = data;
   guihckElement* listener = chckPoolGet(ctx->elements, listenerId);
   _guihckProperty* listenerProperty = chckHashTableStrGet(listener->properties, key);
@@ -476,6 +480,9 @@ static void _guihckPropertyCreateAlias(guihckContext* ctx, guihckElementId eleme
 
 static void _guihckPropertyBindListenerCallback(guihckContext* ctx, guihckElementId listenerId, guihckElementId listenedId, const char* property, SCM value, void* data)
 {
+  (void) listenedId;
+  (void) property;
+
   char* key = data;
   guihckElement* listener = chckPoolGet(ctx->elements, listenerId);
   _guihckProperty* listenerProperty = chckHashTableStrGet(listener->properties, key);
@@ -487,7 +494,7 @@ static void _guihckPropertyBindListenerCallback(guihckContext* ctx, guihckElemen
   chckPoolIndex iter = 0;
   _guihckBoundProperty* bound;
   size_t i;
-  for(i = 0; bound = chckIterPoolIter(listenerProperty->bind.bound, &iter); ++i)
+  for(i = 0; (bound = chckIterPoolIter(listenerProperty->bind.bound, &iter)); ++i)
   {
     if(i == bound->index)
     {
@@ -652,7 +659,7 @@ void guihckElementProperty(guihckContext* ctx, guihckElementId elementId, const 
   {
     chckPoolIndex iter = 0;
     _guihckBoundProperty* bound;
-    while(bound = chckIterPoolIter(existing->bind.bound, &iter))
+    while((bound = chckIterPoolIter(existing->bind.bound, &iter)))
     {
       if(!scm_is_eq(bound->value, SCM_UNDEFINED))
       {
@@ -839,7 +846,9 @@ SCM guihckContextExecuteScriptFile(guihckContext* ctx, const char* path)
 {
   FILE* file;
 
-  if(file = fopen(path, "rb"))
+  SCM result = SCM_UNDEFINED;
+
+  if((file = fopen(path, "rb")))
   {
     /* Read file into memory */
     fseek(file, 0, SEEK_END);
@@ -849,9 +858,11 @@ SCM guihckContextExecuteScriptFile(guihckContext* ctx, const char* path)
     fread(contents, pos, 1, file);
     fclose(file);
 
-    guihckContextExecuteScript(ctx, contents);
+    result = guihckContextExecuteScript(ctx, contents);
     free(contents);
   }
+
+  return result;
 }
 
 void guihckStackPushNewElement(guihckContext* ctx, const char* typeName)
@@ -899,7 +910,7 @@ void guihckStackPushElementById(guihckContext* ctx, const char* idValue)
   chckRingPoolPushEnd(queue, &initialId);
 
   guihckElementId* id;
-  while(id = chckRingPoolPopFirst(queue))
+  while((id = chckRingPoolPopFirst(queue)))
   {
     if(scm_is_eq(guihckElementGetProperty(ctx, *id, "id"), idstr))
     {
@@ -910,7 +921,7 @@ void guihckStackPushElementById(guihckContext* ctx, const char* idValue)
     }
 
     // Add children to queue
-    int i;
+    unsigned int i;
     for(i = 0; i < guihckElementGetChildCount(ctx, *id); ++i)
     {
       guihckElementId childId = guihckElementGetChild(ctx, *id, i);
@@ -921,7 +932,7 @@ void guihckStackPushElementById(guihckContext* ctx, const char* idValue)
 
   // Search siblings
   guihckElementId parentId = guihckElementGetParent(ctx, initialId);
-  if(parentId != GUIHCK_NO_PARENT);
+  if(parentId != GUIHCK_NO_PARENT)
   {
     int siblings = guihckElementGetChildCount(ctx, parentId);
     int i;
@@ -995,7 +1006,7 @@ void guihckContextMouseDown(guihckContext* ctx, float x, float y, int button)
   /* Should be replaced by querying a quad tree*/
   guihckMouseAreaId mouseAreaIter = 0;
   _guihckMouseArea* mouseArea  = NULL;
-  while (mouseArea = chckPoolIter(ctx->mouseAreas, &mouseAreaIter))
+  while((mouseArea = chckPoolIter(ctx->mouseAreas, &mouseAreaIter)))
   {
     if(mouseArea->functionMap.mouseDown
        && pointInRect(x, y, &mouseArea->rect))
@@ -1011,7 +1022,7 @@ void guihckContextMouseUp(guihckContext* ctx, float x, float y, int button)
   /* Should be replaced by querying a quad tree*/
   guihckMouseAreaId mouseAreaIter = 0;
   _guihckMouseArea* mouseArea  = NULL;
-  while (mouseArea = chckPoolIter(ctx->mouseAreas, &mouseAreaIter))
+  while((mouseArea = chckPoolIter(ctx->mouseAreas, &mouseAreaIter)))
   {
     if(mouseArea->functionMap.mouseUp
        && pointInRect(x, y, &mouseArea->rect))
@@ -1027,7 +1038,7 @@ void guihckContextMouseMove(guihckContext* ctx, float sx, float sy, float dx, fl
   /* Should be replaced by querying the segment from a quad tree*/
   guihckMouseAreaId mouseAreaIter = 0;
   _guihckMouseArea* mouseArea  = NULL;
-  while (mouseArea = chckPoolIter(ctx->mouseAreas, &mouseAreaIter))
+  while((mouseArea = chckPoolIter(ctx->mouseAreas, &mouseAreaIter)))
   {
     if(!mouseArea->functionMap.mouseMove && !mouseArea->functionMap.mouseEnter && !mouseArea->functionMap.mouseExit)
       continue;
@@ -1107,6 +1118,12 @@ char pointInRect(float x, float y, const _guihckRect* r)
 
 static void _guihckPropertyListenerFreeCallback(guihckContext* ctx, guihckElementId listenerId, guihckElementId listenedId, const char* property, SCM value, void* data)
 {
+  (void) ctx;
+  (void) listenerId;
+  (void) listenedId;
+  (void) property;
+  (void) value;
+
   if(data)
     free(data);
 }

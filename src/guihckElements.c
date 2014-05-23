@@ -1,4 +1,6 @@
 #include "guihckElements.h"
+#include "guihckElementUtils.h"
+
 #include <stdio.h>
 
 static const char GUIHCK_ITEM_SCM[] =
@@ -132,6 +134,8 @@ void guihckElementsAddColumnType(guihckContext* ctx)
 
 void initItem(guihckContext* ctx, guihckElementId id, void* data)
 {
+  (void) data;
+
   guihckElementAddParentPositionListeners(ctx, id);
 }
 
@@ -150,6 +154,8 @@ void initMouseArea(guihckContext* ctx, guihckElementId id, void* data)
 
 void destroyMouseArea(guihckContext* ctx, guihckElementId id, void* data)
 {
+  (void) id;
+
   guihckMouseAreaRemove(ctx, *((guihckMouseAreaId*) data));
 }
 
@@ -174,6 +180,11 @@ bool updateMouseArea(guihckContext* ctx, guihckElementId id, void* data)
 }
 bool mouseAreaMouseDown(guihckContext* ctx, guihckElementId id, void* data, int button, float x, float y)
 {
+  (void) data;
+  (void) button;
+  (void) x;
+  (void) y;
+
   SCM handler = guihckElementGetProperty(ctx, id, "on-mouse-down");
   if(scm_to_bool(scm_list_p(handler)))
   {
@@ -186,6 +197,11 @@ bool mouseAreaMouseDown(guihckContext* ctx, guihckElementId id, void* data, int 
 
 bool mouseAreaMouseUp(guihckContext* ctx, guihckElementId id, void* data, int button, float x, float y)
 {
+  (void) data;
+  (void) button;
+  (void) x;
+  (void) y;
+
   SCM handler = guihckElementGetProperty(ctx, id, "on-mouse-up");
   if(scm_to_bool(scm_list_p(handler)))
   {
@@ -198,6 +214,12 @@ bool mouseAreaMouseUp(guihckContext* ctx, guihckElementId id, void* data, int bu
 
 bool mouseAreaMouseMove(guihckContext* ctx, guihckElementId id, void* data, float sx, float sy, float dx, float dy)
 {
+  (void) data;
+  (void) sx;
+  (void) sy;
+  (void) dx;
+  (void) dy;
+
   SCM handler = guihckElementGetProperty(ctx, id, "on-mouse-move");
   if(scm_to_bool(scm_list_p(handler)))
   {
@@ -209,6 +231,12 @@ bool mouseAreaMouseMove(guihckContext* ctx, guihckElementId id, void* data, floa
 }
 bool mouseAreaMouseEnter(guihckContext* ctx, guihckElementId id, void* data, float sx, float sy, float dx, float dy)
 {
+  (void) data;
+  (void) sx;
+  (void) sy;
+  (void) dx;
+  (void) dy;
+
   SCM handler = guihckElementGetProperty(ctx, id, "on-mouse-enter");
   if(scm_to_bool(scm_list_p(handler)))
   {
@@ -220,6 +248,12 @@ bool mouseAreaMouseEnter(guihckContext* ctx, guihckElementId id, void* data, flo
 }
 bool mouseAreaMouseExit(guihckContext* ctx, guihckElementId id, void* data, float sx, float sy, float dx, float dy)
 {
+  (void) data;
+  (void) sx;
+  (void) sy;
+  (void) dx;
+  (void) dy;
+
   SCM handler = guihckElementGetProperty(ctx, id, "on-mouse-exit");
   if(scm_to_bool(scm_list_p(handler)))
   {

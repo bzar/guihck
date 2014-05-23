@@ -96,6 +96,8 @@ SCM guihckGuileRunExpression(guihckContext* ctx, SCM expression)
 
 void* initGuile(void* data)
 {
+  (void) data;
+
   scm_c_define_gsubr("push-new-element!", 1, 0, 0, guilePushNewElement);
   scm_c_define_gsubr("push-element!", 1, 0, 0, guilePushElement);
   scm_c_define_gsubr("push-element-by-id!", 1, 0, 0, guilePushElementById);
@@ -110,6 +112,8 @@ void* initGuile(void* data)
   scm_c_define_gsubr("get-element-child-count", 0, 0, 0, guileGetElementChildCount);
 
   scm_c_eval_string(GUIHCK_GUILE_DEFAULT_SCM);
+
+  return NULL;
 }
 
 void* registerFunction(void* data)
@@ -208,6 +212,9 @@ SCM guileSetElementProperty(SCM keySymbol, SCM value)
 
 static void guilePropertyListenerCallback(guihckContext* ctx, guihckElementId listenerId, guihckElementId listenedId, const char* property, SCM value, void* data)
 {
+  (void) listenedId;
+  (void) property;
+
   guihckStackPushElement(ctx, listenerId);
   SCM callback = data;
   guihckGuileRunExpression(ctx, scm_list_2(callback, value));
@@ -217,6 +224,12 @@ static void guilePropertyListenerCallback(guihckContext* ctx, guihckElementId li
 
 static void guilePropertyListenerFreeCallback(guihckContext* ctx, guihckElementId listenerId, guihckElementId listenedId, const char* property, SCM value, void* data)
 {
+  (void) ctx;
+  (void) listenerId;
+  (void) listenedId;
+  (void) property;
+  (void) value;
+
   SCM callback = data;
   scm_gc_unprotect_object(callback);
 }

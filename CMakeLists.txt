@@ -6,7 +6,6 @@ include("cmake/subproject.cmake")
 OPTION(GUIHCK_BUILD_TESTS "Build guihck tests/examples" OFF)
 
 set(GLHCK_BUILD_EXAMPLES OFF CACHE BOOL "Skip GLHCK examples")
-
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(guile-2.0 REQUIRED guile-2.0)
 
@@ -21,6 +20,8 @@ include_directories(
 )
 
 file(GLOB SOURCES src/*.c)
+
+list(APPEND CMAKE_C_FLAGS "-Wall -Wextra -Wno-variadic-macros -Wno-long-long")
 
 add_library(guihck
     ${SOURCES}
