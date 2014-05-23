@@ -4,11 +4,15 @@ project(guihck-tests)
 add_subdirectory(lib)
 
 include_directories(
+  ../include
+  ${guile-2.0_INCLUDE_DIRS}
   ${kazmath_SOURCE_DIR}/src
   ${glhck_SOURCE_DIR}/include
   ${glfwhck_SOURCE_DIR}/include
   ${GLFW_SOURCE_DIR}/include
   ../modules/glhck/include)
+
+list(APPEND CMAKE_C_FLAGS "-Wall -Wextra -Wno-variadic-macros -Wno-long-long")
 
 add_executable(guihck-simple simple.c)
 target_link_libraries(guihck-simple guihck)
