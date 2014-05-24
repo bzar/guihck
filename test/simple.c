@@ -38,7 +38,7 @@ int main(int argc, char** argv)
   (void) argc;
   (void) argv;
 
-  guihckElementTypeFunctionMap fooMap = {initFoo, destroyFoo, updateFoo, renderFoo};
+  guihckElementTypeFunctionMap fooMap = {initFoo, destroyFoo, updateFoo, renderFoo, NULL, NULL};
 
   guihckInit();
   // Trivial test for context

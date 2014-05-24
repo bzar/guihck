@@ -3,6 +3,7 @@
 
 #include <libguile.h>
 #include <stdbool.h>
+#include <guihckKeys.h>
 
 #ifdef __cplusplus
 extern "C"
@@ -13,6 +14,14 @@ typedef size_t guihckElementTypeId;
 typedef size_t guihckMouseAreaId;
 typedef size_t guihckPropertyListenerId;
 
+typedef enum guihckKeyAction {
+  GUIHCK_KEY_PRESS = GUIHCK_PRESS,
+  GUIHCK_KEY_RELEASE = GUIHCK_RELEASE,
+  GUIHCK_KEY_REPEAT = GUIHCK_REPEAT
+} guihckKeyAction;
+
+typedef int guihckKey;
+typedef int guihckKeyMods;
 
 typedef struct _guihckContext guihckContext;
 typedef struct _guihckElement guihckElement;
@@ -23,6 +32,8 @@ typedef struct guihckElementTypeFunctionMap {
    void (*destroy)(guihckContext* ctx, guihckElementId id, void* data);
    bool (*update)(guihckContext* ctx, guihckElementId id, void* data);
    void (*render)(guihckContext* ctx, guihckElementId id, void* data);
+   bool (*keyEvent)(guihckContext* ctx, guihckElementId id, guihckKey key, int scancode, guihckKeyAction action, guihckKeyMods mods, void* data);
+   bool (*keyChar)(guihckContext* ctx, guihckElementId id, unsigned int codepoint, void* data);
 } guihckElementTypeFunctionMap;
 
 // Mouse area function map
@@ -51,6 +62,12 @@ void guihckContextRender(guihckContext* ctx);
 void guihckContextMouseDown(guihckContext* ctx, float x, float y, int button);
 void guihckContextMouseUp(guihckContext* ctx, float x, float y, int button);
 void guihckContextMouseMove(guihckContext* ctx, float sx, float sy, float dx, float dy);
+
+void guihckContextKeyboardFocus(guihckContext* ctx, guihckElementId elementId);
+guihckElementId guihckContextGetKeyboardFocus(guihckContext* ctx);
+
+void guihckContextKeyboardEvent(guihckContext* ctx, guihckKey key, int scancode, guihckKeyAction action, guihckKeyMods mods);
+void guihckContextKeyboardChar(guihckContext* ctx, unsigned int codepoint);
 
 guihckElementId guihckContextGetRootElement(guihckContext* ctx);
 

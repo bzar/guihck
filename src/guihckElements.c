@@ -106,7 +106,7 @@ void guihckElementsAddAllTypes(guihckContext* ctx)
 
 void guihckElementsAddItemType(guihckContext* ctx)
 {
-  guihckElementTypeFunctionMap functionMap = { initItem, NULL, NULL, NULL };
+  guihckElementTypeFunctionMap functionMap = { initItem, NULL, NULL, NULL, NULL, NULL };
   guihckElementTypeAdd(ctx, "item", functionMap, 0);
   guihckContextExecuteScript(ctx, GUIHCK_ITEM_SCM);
 }
@@ -117,6 +117,8 @@ void guihckElementsAddMouseAreaType(guihckContext* ctx)
     initMouseArea,
     destroyMouseArea,
     updateMouseArea,
+    NULL,
+    NULL,
     NULL
   };
   guihckElementTypeAdd(ctx, "mouse-area", functionMap, sizeof(guihckMouseAreaId));

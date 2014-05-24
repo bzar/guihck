@@ -57,7 +57,9 @@ void guihckGlhckAddRectangleType(guihckContext* ctx)
     initRectangle,
     destroyRectangle,
     updateRectangle,
-    renderRectangle
+    renderRectangle,
+    NULL,
+    NULL
   };
   guihckElementTypeAdd(ctx, "rectangle", functionMap, sizeof(glhckObject*));
   guihckContextExecuteScript(ctx, GUIHCK_GLHCK_RECTANGLE_SCM);
@@ -138,7 +140,9 @@ void guihckGlhckAddTextType(guihckContext* ctx)
     initText,
     destroyText,
     updateText,
-    renderText
+    renderText,
+    NULL,
+    NULL
   };
   guihckElementTypeAdd(ctx, "text", functionMap, sizeof(_guihckGlhckText));
   guihckContextExecuteScript(ctx, GUIHCK_GLHCK_TEXT_SCM);
@@ -259,7 +263,9 @@ void guihckGlhckAddImageType(guihckContext* ctx)
     initImage,
     destroyImage,
     updateImage,
-    renderImage
+    renderImage,
+    NULL,
+    NULL
   };
   guihckElementTypeAdd(ctx, "image", functionMap, sizeof(_guihckGlhckImage));
   guihckContextExecuteScript(ctx, GUIHCK_GLHCK_IMAGE_SCM);

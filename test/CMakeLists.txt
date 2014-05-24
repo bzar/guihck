@@ -23,3 +23,7 @@ add_test(alias alias)
 add_executable(bind bind.c)
 target_link_libraries(bind guihck)
 add_test(bind bind)
+
+add_executable(keyboard keyboard.c)
+target_link_libraries(keyboard guihck)
+add_test(keyboard keyboard)

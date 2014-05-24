@@ -19,6 +19,7 @@ typedef struct _guihckContext
   chckIterPool* stack;
   guihckElementId rootElementId;
   chckPool* propertyListeners;
+  guihckElementId focused;
 } _guihckContext;
 
 typedef struct _guihckElementType
@@ -116,11 +117,12 @@ guihckContext* guihckContextNew()
   ctx->stack = chckIterPoolNew(16, 16, sizeof(guihckElementId));
   ctx->propertyListeners = chckPoolNew(16, 16, sizeof(_guihckPropertyListener));
 
-  guihckElementTypeFunctionMap rootElementFunctionMap = { NULL, NULL, NULL, NULL };
+  guihckElementTypeFunctionMap rootElementFunctionMap = { NULL, NULL, NULL, NULL, NULL, NULL };
   guihckElementTypeId rootTypeId = guihckElementTypeAdd(ctx, "root", rootElementFunctionMap, 0);
   ctx->rootElementId = guihckElementNew(ctx, rootTypeId, GUIHCK_NO_PARENT);
   guihckElementProperty(ctx, ctx->rootElementId, "id", scm_from_utf8_string("root"));
   guihckStackPushElement(ctx, ctx->rootElementId);
+  ctx->focused = ctx->rootElementId;
   return ctx;
 }
 
@@ -381,6 +383,10 @@ void guihckElementRemove(guihckContext* ctx, guihckElementId elementId)
 
     _guihckElementUpdateChildrenProperty(ctx, parentId);
   }
+
+  // If was focused, focus to root
+  if(ctx->focused == elementId)
+    ctx->focused = ctx->rootElementId;
 }
 
 
@@ -749,10 +755,113 @@ void guihckElementDirty(guihckContext* ctx, guihckElementId elementId)
   element->dirty = true;
 }
 
+void guihckContextKeyboardFocus(guihckContext* ctx, guihckElementId elementId)
+{
+  guihckElementProperty(ctx, ctx->focused, "focus", SCM_BOOL_F);
+  ctx->focused = elementId;
+  guihckElementProperty(ctx, elementId, "focus", SCM_BOOL_T);
+}
+
+guihckElementId guihckContextGetKeyboardFocus(guihckContext* ctx)
+{
+  return ctx->focused;
+}
+
 void* guihckElementGetData(guihckContext* ctx, guihckElementId elementId)
 {
   guihckElement* element = chckPoolGet(ctx->elements, elementId);
   return element->data;
+}
+
+void guihckContextKeyboardEvent(guihckContext* ctx, guihckKey key, int scancode, guihckKeyAction action, guihckKeyMods mods)
+{
+  guihckElementId id = ctx->focused;
+
+  SCM keyScm = scm_from_int32(key);
+  SCM scancodeScm = scm_from_int32(scancode);
+  SCM actionScm =
+      action == GUIHCK_KEY_PRESS ? scm_from_utf8_symbol("press") :
+      action == GUIHCK_KEY_RELEASE ? scm_from_utf8_symbol("release") :
+      action == GUIHCK_KEY_PRESS ? scm_from_utf8_symbol("repeat") :
+      scm_from_utf8_symbol("unknown");
+  actionScm = scm_list_2(scm_sym_quote, actionScm);
+
+  SCM modsScm = SCM_EOL;
+  if(mods & GUIHCK_MOD_SHIFT)
+    modsScm = scm_cons(scm_from_utf8_symbol("shift"), modsScm);
+  if(mods & GUIHCK_MOD_ALT)
+    modsScm = scm_cons(scm_from_utf8_symbol("alt"), modsScm);
+  if(mods & GUIHCK_MOD_CONTROL)
+    modsScm = scm_cons(scm_from_utf8_symbol("control"), modsScm);
+  if(mods & GUIHCK_MOD_SUPER)
+    modsScm = scm_cons(scm_from_utf8_symbol("super"), modsScm);
+  modsScm = scm_list_2(scm_sym_quote, modsScm);
+
+  // Move up the element tree until someone handles the event
+  bool handled = false;
+  while(!handled && id != GUIHCK_NO_PARENT)
+  {
+    // First attempt to call native handler
+    guihckElement* element = chckPoolGet(ctx->elements, id);
+    _guihckElementType* elementType = chckPoolGet(ctx->elementTypes, element->type);
+    if(elementType->functionMap.keyChar)
+    {
+      handled = elementType->functionMap.keyEvent(ctx, id, key, scancode, action, mods, element->data);
+    }
+
+    // Second try to call a script handler
+    if(!handled)
+    {
+      SCM handler = guihckElementGetProperty(ctx, id, "on-key");
+      if(scm_is_true(scm_procedure_p(handler)))
+      {
+        SCM expression = scm_list_5(handler, keyScm, scancodeScm, actionScm, modsScm);
+        guihckStackPushElement(ctx, id);
+        SCM result = guihckContextExecuteExpression(ctx, expression);
+        guihckStackPopElement(ctx);
+        handled = scm_is_eq(result, SCM_BOOL_T);
+      }
+    }
+
+    id = guihckElementGetParent(ctx, id);
+  }
+
+}
+
+void guihckContextKeyboardChar(guihckContext* ctx, unsigned int codepoint)
+{
+  guihckElementId id = ctx->focused;
+  SCM codepointChar = scm_integer_to_char(scm_from_uint32(codepoint));
+
+  // Move up the element tree until someone handles the event
+  bool handled = false;
+  while(!handled && id != GUIHCK_NO_PARENT)
+  {
+    // First attempt to call native handler
+    guihckElement* element = chckPoolGet(ctx->elements, id);
+    _guihckElementType* elementType = chckPoolGet(ctx->elementTypes, element->type);
+    if(elementType->functionMap.keyChar)
+    {
+      handled = elementType->functionMap.keyChar(ctx, id, codepoint, element->data);
+    }
+
+    // Second try to call a script handler
+    if(!handled)
+    {
+      SCM handler = guihckElementGetProperty(ctx, id, "on-char");
+      if(scm_is_true(scm_procedure_p(handler)))
+      {
+        SCM expression = scm_list_2(handler, codepointChar);
+        guihckStackPushElement(ctx, id);
+        SCM result = guihckContextExecuteExpression(ctx, expression);
+        guihckStackPopElement(ctx);
+
+        handled = scm_is_eq(result, SCM_BOOL_T);
+      }
+    }
+
+    id = guihckElementGetParent(ctx, id);
+  }
 }
 
 guihckPropertyListenerId guihckElementAddListener(guihckContext* ctx, guihckElementId listenerId, guihckElementId listenedId,

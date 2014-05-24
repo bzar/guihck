@@ -18,7 +18,7 @@ int main(int argc, char** argv)
   (void) argc;
   (void) argv;
 
-  guihckElementTypeFunctionMap fooMap = {NULL, NULL, NULL, NULL};
+  guihckElementTypeFunctionMap fooMap = {NULL, NULL, NULL, NULL, NULL, NULL};
 
   guihckInit();
   guihckContext* ctx = guihckContextNew();
