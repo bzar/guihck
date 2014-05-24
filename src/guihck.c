@@ -736,6 +736,7 @@ guihckElementId guihckElementGetChild(guihckContext* ctx, guihckElementId elemen
   guihckElementId* childId;
   int i = 0;
   while ((childId = chckIterPoolIter(element->children, &iter)) && i++ < childIndex);
+  assert(childId && "Element does not have requested child");
   return *childId;
 }
 
@@ -749,11 +750,6 @@ void guihckElementDirty(guihckContext* ctx, guihckElementId elementId)
 {
   guihckElement* element = chckPoolGet(ctx->elements, elementId);
   element->dirty = true;
-
-  chckPoolIndex iter = 0;
-  guihckElementId* childId;
-  while ((childId = chckIterPoolIter(element->children, &iter)))
-    guihckElementDirty(ctx, *childId);
 }
 
 void* guihckElementGetData(guihckContext* ctx, guihckElementId elementId)
