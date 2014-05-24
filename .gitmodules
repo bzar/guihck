@@ -10,3 +10,12 @@
 [submodule "test/lib/glfwhck"]
 	path = test/lib/glfwhck
 	url = https://github.com/bzar/glfwhck.git
+[submodule "example/lib/glfw"]
+	path = example/lib/glfw
+	url = https://github.com/glfw/glfw
+[submodule "example/lib/glhck"]
+	path = example/lib/glhck
+	url = https://github.com/Cloudef/glhck.git
+[submodule "example/lib/glfwhck"]
+	path = example/lib/glfwhck
+	url = https://github.com/bzar/glfwhck.git
