@@ -16,7 +16,6 @@ add_subdirectory(lib)
 add_subdirectory(src)
 
 if(GUIHCK_BUILD_TESTS)
-  enable_testing()
   add_subdirectory(test)
 endif(GUIHCK_BUILD_TESTS)
 
