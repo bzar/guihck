@@ -271,7 +271,6 @@ guihckElementId guihckElementNew(guihckContext* ctx, guihckElementTypeId typeId,
   if(parent)
   {
     chckIterPoolAdd(parent->children, &id, NULL);
-    guihckElementDirty(ctx, parentId);
   }
 
   if(type->functionMap.init)
@@ -681,7 +680,6 @@ void guihckElementProperty(guihckContext* ctx, guihckElementId elementId, const 
   {
     /* Create new property */
     chckHashTableStrSet(element->properties, key, &property, sizeof(_guihckProperty));
-    guihckElementDirty(ctx, elementId);
   }
   else if(isNewValue)
   {
@@ -712,7 +710,6 @@ void guihckElementProperty(guihckContext* ctx, guihckElementId elementId, const 
     }
 
     _guihckElementPropertyNotifyListeners(ctx, existing);
-    guihckElementDirty(ctx, elementId);
   }
 }
 

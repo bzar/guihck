@@ -150,6 +150,10 @@ void initMouseArea(guihckContext* ctx, guihckElementId id, void* data)
   };
   *((guihckMouseAreaId*) data) = guihckMouseAreaNew(ctx, id, functionMap);
   guihckElementAddParentPositionListeners(ctx, id);
+  guihckElementAddUpdateProperty(ctx, id, "absolute-x");
+  guihckElementAddUpdateProperty(ctx, id, "absolute-y");
+  guihckElementAddUpdateProperty(ctx, id, "width");
+  guihckElementAddUpdateProperty(ctx, id, "height");
 }
 
 void destroyMouseArea(guihckContext* ctx, guihckElementId id, void* data)

@@ -67,3 +67,19 @@ void guihckElementAddParentPositionListeners(guihckContext* ctx, guihckElementId
   guihckElementAddListener(ctx, id, id, "y", updateAbsoluteY, NULL, NULL);
   guihckElementAddListener(ctx, id, parent, "absolute-y", updateAbsoluteY, NULL, NULL);
 }
+
+
+static void setDirty(guihckContext* ctx, guihckElementId listenerId, guihckElementId listenedId, const char* property, SCM value, void* data)
+{
+  (void) listenedId;
+  (void) property;
+  (void) value;
+  (void) data;
+
+  guihckElementDirty(ctx, listenerId);
+}
+
+void guihckElementAddUpdateProperty(guihckContext* ctx, guihckElementId id, const char* propertyName)
+{
+  guihckElementAddListener(ctx, id, id, propertyName, setDirty, NULL, NULL);
+}

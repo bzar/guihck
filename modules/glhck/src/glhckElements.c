@@ -72,6 +72,11 @@ void initRectangle(guihckContext* ctx, guihckElementId id, void* data)
 
   *((glhckObject**) data) = o;
   guihckElementAddParentPositionListeners(ctx, id);
+  guihckElementAddUpdateProperty(ctx, id, "absolute-x");
+  guihckElementAddUpdateProperty(ctx, id, "absolute-y");
+  guihckElementAddUpdateProperty(ctx, id, "width");
+  guihckElementAddUpdateProperty(ctx, id, "height");
+  guihckElementAddUpdateProperty(ctx, id, "color");
 }
 
 void destroyRectangle(guihckContext* ctx, guihckElementId id, void* data)
@@ -150,6 +155,11 @@ void initText(guihckContext* ctx, guihckElementId id, void* data)
   glhckMaterialFree(m);
   d->content = NULL;
   guihckElementAddParentPositionListeners(ctx, id);
+  guihckElementAddUpdateProperty(ctx, id, "absolute-x");
+  guihckElementAddUpdateProperty(ctx, id, "absolute-y");
+  guihckElementAddUpdateProperty(ctx, id, "text");
+  guihckElementAddUpdateProperty(ctx, id, "size");
+  guihckElementAddUpdateProperty(ctx, id, "color");
 }
 
 void destroyText(guihckContext* ctx, guihckElementId id, void* data)
@@ -264,6 +274,12 @@ void initImage(guihckContext* ctx, guihckElementId id, void* data)
   glhckMaterialFree(m);
   d->source = NULL;
   guihckElementAddParentPositionListeners(ctx, id);
+  guihckElementAddUpdateProperty(ctx, id, "absolute-x");
+  guihckElementAddUpdateProperty(ctx, id, "absolute-y");
+  guihckElementAddUpdateProperty(ctx, id, "width");
+  guihckElementAddUpdateProperty(ctx, id, "height");
+  guihckElementAddUpdateProperty(ctx, id, "color");
+  guihckElementAddUpdateProperty(ctx, id, "source");
 }
 
 void destroyImage(guihckContext* ctx, guihckElementId id, void* data)
