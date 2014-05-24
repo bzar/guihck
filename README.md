@@ -1,6 +1,8 @@
 guihck
 ======
 
+[![buildhck status](http://cloudef.eu:9001/build/guihck/master/linux%20x86_64/build-status.png)](#)
+
 Overview
 --------
 
