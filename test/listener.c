@@ -1,5 +1,5 @@
 #include "guihck.h"
-
+#include <assert.h>
 #include <stdio.h>
 
 void callback(guihckContext* ctx, guihckElementId listenerId, guihckElementId listenedId, const char* property, SCM value, void* data)
@@ -34,14 +34,17 @@ int main(int argc, char** argv)
   guihckElementProperty(ctx, id3, "bar", scm_from_int8(0));
   guihckElementProperty(ctx, id4, "bar", scm_from_int8(0));
 
-  printf("Element %d listens to element %d\n", (int) id2, (int) id1);
   guihckElementAddListener(ctx, id2, id1, "bar", callback, NULL, NULL);
-  printf("Element %d listens to element %d\n", (int) id3, (int) id2);
   guihckElementAddListener(ctx, id3, id2, "bar", callback, NULL, NULL);
-  printf("Element %d listens to element %d\n", (int) id4, (int) id3);
   guihckElementAddListener(ctx, id4, id3, "bar", callback, NULL, NULL);
 
   guihckElementProperty(ctx,  id1, "bar", scm_from_int8(1));
+
+  assert(scm_to_int8(guihckElementGetProperty(ctx, id1, "bar")) == 1);
+  assert(scm_to_int8(guihckElementGetProperty(ctx, id2, "bar")) == 2);
+  assert(scm_to_int8(guihckElementGetProperty(ctx, id3, "bar")) == 3);
+  assert(scm_to_int8(guihckElementGetProperty(ctx, id4, "bar")) == 4);
+
   guihckContextFree(ctx);
 
   return EXIT_SUCCESS;

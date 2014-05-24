@@ -3,7 +3,7 @@ project(guihck)
 
 include("cmake/subproject.cmake")
 
-OPTION(GUIHCK_BUILD_TESTS "Build guihck tests" OFF)
+OPTION(GUIHCK_BUILD_TESTS "Build guihck tests" ON)
 OPTION(GUIHCK_BUILD_EXAMPLES "Build guihck examples" OFF)
 
 set(GLHCK_BUILD_EXAMPLES OFF CACHE BOOL "Skip GLHCK examples")
@@ -14,6 +14,7 @@ add_subdirectory(lib)
 add_subdirectory(src)
 
 if(GUIHCK_BUILD_TESTS)
+  enable_testing()
   add_subdirectory(test)
 endif(GUIHCK_BUILD_TESTS)
 

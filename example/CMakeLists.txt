@@ -17,9 +17,6 @@ list(APPEND CMAKE_C_FLAGS "-Wall -Wextra -Wno-variadic-macros -Wno-long-long")
 add_executable(guihck-simple simple.c)
 target_link_libraries(guihck-simple guihck)
 
-add_executable(guihck-listener listener.c)
-target_link_libraries(guihck-listener guihck)
-
 add_executable(guihck-cli-run cli-run.c)
 target_link_libraries(guihck-cli-run guihck)
 
