@@ -47,6 +47,7 @@ static SCM guileGetElement();
 static SCM guileGetElementProperty(SCM keySymbol);
 static SCM guileGetElementChildCount();
 static SCM guilePopElement();
+static SCM guileSetKeyboardFocus();
 
 void guihckGuileInit()
 {
@@ -110,6 +111,7 @@ void* initGuile(void* data)
   scm_c_define_gsubr("get-element", 0, 0, 0, guileGetElement);
   scm_c_define_gsubr("get-element-property", 1, 0, 0, guileGetElementProperty);
   scm_c_define_gsubr("get-element-child-count", 0, 0, 0, guileGetElementChildCount);
+  scm_c_define_gsubr("keyboard-focus!", 0, 0, 0, guileSetKeyboardFocus);
 
   scm_c_eval_string(GUIHCK_GUILE_DEFAULT_SCM);
 
@@ -278,5 +280,11 @@ SCM guileGetElementChildCount()
 SCM guilePopElement()
 {
   guihckStackPopElement(threadLocalContext.ctx);
+  return SCM_BOOL_T;
+}
+
+SCM guileSetKeyboardFocus()
+{
+  guihckContextKeyboardFocus(threadLocalContext.ctx, guihckStackGetElement(threadLocalContext.ctx));
   return SCM_BOOL_T;
 }

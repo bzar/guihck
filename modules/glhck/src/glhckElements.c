@@ -194,8 +194,11 @@ bool updateText(guihckContext* ctx, guihckElementId id, void* data)
     {
       float size = scm_is_real(textSize)  ? scm_to_double(textSize) : 12;
       glhckTexture* texture = glhckTextRTT(d->text, d->font, size, textContentStr, glhckTextureDefaultLinearParameters());
-      glhckMaterialTexture(glhckObjectGetMaterial(d->object), texture);
-      glhckTextureFree(texture);
+      if(texture)
+      {
+        glhckMaterialTexture(glhckObjectGetMaterial(d->object), texture);
+        glhckTextureFree(texture);
+      }
       free(d->content);
       d->content = textContentStr;
     }

@@ -115,5 +115,13 @@ static const char GUIHCK_GUILE_DEFAULT_SCM[] =
     "      (add-element-property-listener! element property callback))))"
 
     "(define unbind remove-element-property-listener!)"
+
+    "(define focus!"
+    "  (case-lambda"
+    "    (() (keyboard-focus!))"
+    "    ((element)"
+    "      (push-element! element)"
+    "      (keyboard-focus!)"
+    "      (pop-element!))))"
     ;
 #endif // GUIHCKGUILEDEFAULTSCM_H
