@@ -1,6 +1,8 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
 project(guihck)
 
+include(CTest)
+
 include("cmake/subproject.cmake")
 
 OPTION(GUIHCK_BUILD_TESTS "Build guihck tests" ON)
