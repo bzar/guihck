@@ -1,7 +1,7 @@
 #include "guihck.h"
 
 #include <stdio.h>
-
+#include <assert.h>
 void initFoo(guihckContext* ctx, guihckElementId id, void* data)
 {
   (void) ctx;
@@ -49,10 +49,21 @@ int main(int argc, char** argv)
   guihckContextRender(ctx);
   guihckContextFree(ctx);
 
-  // Trivial test for stack operations
+  // Stack operations
   guihckContext* ctx2 = guihckContextNew();
   guihckElementTypeAdd(ctx2, "foo", fooMap, 0);
   guihckStackPushNewElement(ctx2, "foo");
+
+  guihckStackElementProperty(ctx2, "bar", SCM_BOOL_T);
+  assert(scm_is_eq(guihckStackGetElementProperty(ctx2, "bar"), SCM_BOOL_T));
+  guihckStackElementProperty(ctx2, "bar", SCM_BOOL_F);
+  assert(scm_is_eq(guihckStackGetElementProperty(ctx2, "bar"), SCM_BOOL_F));
+
+  guihckStackPushParentElement(ctx2);
+  guihckStackElementProperty(ctx2, "bar", SCM_BOOL_T);
+  assert(guihckStackGetElementChildCount(ctx2) == 1);
+  guihckStackPopElement(ctx2);
+
   guihckStackPopElement(ctx2);
   guihckContextUpdate(ctx2);
   guihckContextRender(ctx2);

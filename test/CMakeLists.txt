@@ -8,6 +8,10 @@ include_directories(
 
 list(APPEND CMAKE_C_FLAGS "-Wall -Wextra -Wno-variadic-macros -Wno-long-long")
 
+add_executable(simple simple.c)
+target_link_libraries(simple guihck)
+add_test(simple simple)
+
 add_executable(listener listener.c)
 target_link_libraries(listener guihck)
 add_test(listener listener)
