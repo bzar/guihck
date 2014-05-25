@@ -4,16 +4,38 @@
 #include <stdio.h>
 
 static const char GUIHCK_GLHCK_RECTANGLE_SCM[] =
-    "(define (rectangle props . children)"
-    "  (create-element 'rectangle (append '(x 0 y 0 width 0 height 0 color (255 255 255)) props) children))";
+    "(define (rectangle . args)"
+    "  (define default-args (list"
+    "    (prop 'x 0)"
+    "    (prop 'y 0)"
+    "    (prop 'width 100)"
+    "    (prop 'height 100)"
+    "    (prop 'color '(255 255 255))))"
+    "  (create-element 'rectangle (append default-args args)))"
+    ;
 
 static const char GUIHCK_GLHCK_TEXT_SCM[] =
-    "(define (text props . children)"
-    "  (create-element 'text (append '(x 0 y 0 text \"\" size 12 color (255 255 255)) props) children))";
+    "(define (text . args)"
+    "  (define default-args (list"
+    "    (prop 'x 0)"
+    "    (prop 'y 0)"
+    "    (prop 'size 12)"
+    "    (prop 'text \"\")"
+    "    (prop 'color '(255 255 255))))"
+    "  (create-element 'text (append default-args args)))"
+    ;
 
 static const char GUIHCK_GLHCK_IMAGE_SCM[] =
-    "(define (image props . children)"
-    "  (create-element 'image (append '(x 0 y 0 color (255 255 255) source \"\" source-width 0 source-height 0) props) children))";
+    "(define (image . args)"
+    "  (define default-args (list"
+    "    (prop 'x 0)"
+    "    (prop 'y 0)"
+    "    (prop 'source \"\")"
+    "    (prop 'source-width 0)"
+    "    (prop 'source-height 0)"
+    "    (prop 'color '(255 255 255))))"
+    "  (create-element 'image (append default-args args)))"
+    ;
 
 static void initRectangle(guihckContext* ctx, guihckElementId id, void* data);
 static void destroyRectangle(guihckContext* ctx, guihckElementId id, void* data);

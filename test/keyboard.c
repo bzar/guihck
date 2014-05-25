@@ -7,16 +7,18 @@
 const char TEST_SCM[] =
     "(import (rnrs (6)))"
     "(create-elements!"
-    "  (item (list 'id 'scm-1"
-    "              'on-key (lambda (k sc a m)"
-    "                (display \"on-key 1\\n\"))"
-    "              'on-char (lambda (c)"
-    "                (display \"on-char 1\\n\")))"
-    "    (item (list 'id 'scm-2"
-    "                'on-key (lambda (k sc a m)"
-    "                  (display \"on-key 2\\n\") #t)"
-    "                'on-char (lambda (c)"
-    "                  (display \"on-char 2\\n\") #t)))))"
+    "  (item"
+    "    (id 'scm-1)"
+    "    (prop 'on-key (lambda (k sc a m)"
+    "      (display \"on-key 1\\n\")))"
+    "    (prop 'on-char (lambda (c)"
+    "      (display \"on-char 1\\n\")))"
+    "    (item"
+    "      (id 'scm-2)"
+    "      (prop 'on-key (lambda (k sc a m)"
+    "        (display \"on-key 2\\n\") #t))"
+    "      (prop 'on-char (lambda (c)"
+    "        (display \"on-char 2\\n\") #t)))))"
 
 ;
 

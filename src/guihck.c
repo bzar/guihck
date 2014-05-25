@@ -566,12 +566,12 @@ static void _guihckPropertyBindListenerCallback(guihckContext* ctx, guihckElemen
 
 static void _guihckPropertyCreateBind(guihckContext* ctx, guihckElementId elementId, const char* propertyName, SCM value, _guihckProperty* property)
 {
-  SCM boundListExpression = SCM_CADR(value);
-  SCM functionExpression = SCM_CADDR(value);
+  SCM boundList = SCM_CADR(value);
+  SCM function = SCM_CADDR(value);
 
   guihckStackPushElement(ctx, elementId);
-  SCM boundVector = scm_vector(guihckContextExecuteExpression(ctx, boundListExpression));
-  SCM function = guihckContextExecuteExpression(ctx, functionExpression);
+
+  SCM boundVector = scm_vector(boundList);
 
   property->bind.function = function;
   scm_gc_protect_object(property->bind.function);

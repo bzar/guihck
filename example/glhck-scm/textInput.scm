@@ -1,4 +1,4 @@
-(define (text-input . args)
+(define (text-input-gen)
   (define (append-char! c)
     (set-prop! 'text
       (list->string
@@ -14,16 +14,20 @@
     (cond ((and (= key (keyboard 'backspace))
                 (not (eq? action 'release)))
           (pop-char!))))
-  (apply
-    (composite text (list 'on-char append-char!
-                          'on-key handle-key!)
-      (mouse-area (list 'width '(bind (observe 'parent 'width) identity)
-                        'height '(bind (observe 'parent 'height) identity)
-                        'on-mouse-down (lambda (b x y) (focus! (parent))))))
-    args))
+
+  (composite text 
+    (prop 'on-char append-char!)
+    (prop 'on-key handle-key!)
+    (mouse-area 
+      (prop 'width (bound '(parent width) identity))
+      (prop 'height (bound '(parent height) identity))
+      (prop 'on-mouse-down (lambda (b x y) (focus! (parent)))))))
+      
+(define text-input (text-input-gen))
+
 
 
 (create-elements!
-  (text-input '(id input)))
+  (text-input (id 'input)))
   
 (focus! (find-element 'input))

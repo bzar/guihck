@@ -1,26 +1,44 @@
-(define button
-  (composite rectangle '(width 64
-                         height 32
-                         color (240 240 240)
-                         on-clicked (alias (find-element 'mouse-area) 'on-mouse-down))
-    (text '(text "Button!" 
-            x (bind (observe 'this 'width 'parent 'width) (lambda (w pw) (/ (- pw w) 2)))
-            y (bind (observe 'this 'height 'parent 'height) (lambda (h ph) (/ (- ph h) 2)))
-            color (24 24 24)))
-    (mouse-area (list 'id 'mouse-area
-                      'width '(bind (observe 'parent 'width) identity)
-                      'height '(bind (observe 'parent 'height) identity)
-                      'on-mouse-down (lambda (b x y)
-                        (set-prop! (parent) 'color '(255 255 255)))
-                      'on-mouse-up (lambda (b x y)
-                        (set-prop! (parent) 'color '(240 240 240)))))))
+(define (button-gen)
+  (define center-x
+    (bound '(this width parent width) (lambda (w pw) (/ (- pw w) 2))))
+  (define center-y
+    (bound '(this height parent height) (lambda (h ph) (/ (- ph h) 2))))
+
+  (composite rectangle 
+    (prop 'width 64)
+    (prop 'height 32)
+    (prop 'color '(240 240 240))
+    (prop 'on-clicked '(alias (find-element 'mouse-area) 'on-mouse-down))
+    (text 
+      (prop 'text "Button!")
+      (prop 'x center-x)
+      (prop 'y center-y)
+      (prop 'color '(24 24 24)))
+    (mouse-area 
+      (id 'mouse-area)
+      (prop 'width (bound '(parent width) identity))
+      (prop 'height (bound '(parent height) identity))
+      (prop 'on-mouse-down (lambda (b x y)
+        (set-prop! (parent) 'color '(255 255 255))))
+      (prop 'on-mouse-up (lambda (b x y)
+        (set-prop! (parent) 'color '(240 240 240)))))))
+(define button (button-gen))
 
 (create-elements!
-  (row '(x 100 y 100 spacing 16)
-    (column '(spacing 8)
-      (button '())
-      (button '(width 128)))
-    (column '(spacing 8)
-      (button '())
-      (button '(height 64))
-      (button (list 'on-clicked (lambda (b x y) (set-prop! (parent) 'color '(255 0 0))))))))
+  (row 
+    (prop 'x 100) 
+    (prop 'y 100)
+    (prop 'spacing 16)
+    (column 
+      (prop 'spacing 8)
+      (button)
+      (button 
+        (prop 'width 128)))
+    (column 
+      (prop 'spacing 8)
+      (button)
+      (button 
+        (prop 'height 64))
+      (button 
+        (prop 'on-clicked (lambda (b x y) 
+          (set-prop! (parent) 'color '(255 0 0))))))))
