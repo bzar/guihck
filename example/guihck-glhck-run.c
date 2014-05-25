@@ -94,6 +94,10 @@ int main(int argc, char** argv)
         {
           guihckContextKeyboardChar(ctx, event->keyboardChar.codepoint);
         }
+        case GLFWHCK_EVENT_KEYBOARD_KEY:
+        {
+          guihckContextKeyboardKey(ctx, event->keyboardKey.key, event->keyboardKey.scancode, event->keyboardKey.action, event->keyboardKey.mods);
+        }
         case GLFWHCK_EVENT_MOUSE_POSITION:
         {
           guihckContextMouseMove(ctx, mx, my, event->mousePosition.x, event->mousePosition.y);

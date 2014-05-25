@@ -70,7 +70,7 @@ void guihckContextAddKeyBinding(guihckContext* ctx, guihckKey keyCode, const cha
 const char* guihckContextGetKeyName(guihckContext* ctx, guihckKey keyCode);
 guihckKey guihckContextGetKeyCode(guihckContext* ctx, const char* keyName);
 
-void guihckContextKeyboardEvent(guihckContext* ctx, guihckKey key, int scancode, guihckKeyAction action, guihckKeyMods mods);
+void guihckContextKeyboardKey(guihckContext* ctx, guihckKey key, int scancode, guihckKeyAction action, guihckKeyMods mods);
 void guihckContextKeyboardChar(guihckContext* ctx, unsigned int codepoint);
 
 guihckElementId guihckContextGetRootElement(guihckContext* ctx);

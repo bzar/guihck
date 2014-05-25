@@ -192,13 +192,18 @@ bool updateText(guihckContext* ctx, guihckElementId id, void* data)
     char* textContentStr = scm_to_utf8_string(textContent);
     if(!d->content || strcmp(textContentStr, d->content))
     {
-      float size = scm_is_real(textSize)  ? scm_to_double(textSize) : 12;
-      glhckTexture* texture = glhckTextRTT(d->text, d->font, size, textContentStr, glhckTextureDefaultLinearParameters());
-      if(texture)
+      if(strlen(textContentStr) > 0)
       {
+        float size = scm_is_real(textSize)  ? scm_to_double(textSize) : 12;
+        glhckTexture* texture = glhckTextRTT(d->text, d->font, size, textContentStr, glhckTextureDefaultLinearParameters());
         glhckMaterialTexture(glhckObjectGetMaterial(d->object), texture);
         glhckTextureFree(texture);
       }
+      else
+      {
+        glhckMaterialTexture(glhckObjectGetMaterial(d->object), NULL);
+      }
+
       free(d->content);
       d->content = textContentStr;
     }

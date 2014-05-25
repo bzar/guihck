@@ -90,14 +90,14 @@ int main(int argc, char** argv)
   data4->count = &count;
   data4->accept = false;
 
-  guihckContextKeyboardEvent(ctx, 0, 0, GUIHCK_KEY_PRESS, 0);
+  guihckContextKeyboardKey(ctx, 0, 0, GUIHCK_KEY_PRESS, 0);
   assert(count == 0);
   count = 0;
   guihckContextKeyboardChar(ctx, 42);
   assert(count == 0);
 
   guihckContextKeyboardFocus(ctx, id1);
-  guihckContextKeyboardEvent(ctx, 0, 0, GUIHCK_KEY_PRESS, 0);
+  guihckContextKeyboardKey(ctx, 0, 0, GUIHCK_KEY_PRESS, 0);
   assert(count == 1);
   count = 0;
   guihckContextKeyboardChar(ctx, 42);
@@ -105,7 +105,7 @@ int main(int argc, char** argv)
 
   count = 0;
   guihckContextKeyboardFocus(ctx, id2);
-  guihckContextKeyboardEvent(ctx, 0, 0, GUIHCK_KEY_PRESS, 0);
+  guihckContextKeyboardKey(ctx, 0, 0, GUIHCK_KEY_PRESS, 0);
   assert(count == 2);
   count = 0;
   guihckContextKeyboardChar(ctx, 42);
@@ -113,7 +113,7 @@ int main(int argc, char** argv)
 
   count = 0;
   guihckContextKeyboardFocus(ctx, id3);
-  guihckContextKeyboardEvent(ctx, 0, 0, GUIHCK_KEY_PRESS, 0);
+  guihckContextKeyboardKey(ctx, 0, 0, GUIHCK_KEY_PRESS, 0);
   assert(count == 1);
   count = 0;
   guihckContextKeyboardChar(ctx, 42);
@@ -121,7 +121,7 @@ int main(int argc, char** argv)
 
   count = 0;
   guihckContextKeyboardFocus(ctx, id4);
-  guihckContextKeyboardEvent(ctx, 0, 0, GUIHCK_KEY_PRESS, 0);
+  guihckContextKeyboardKey(ctx, 0, 0, GUIHCK_KEY_PRESS, 0);
   assert(count == 2);
   count = 0;
   guihckContextKeyboardChar(ctx, 42);
@@ -134,7 +134,7 @@ int main(int argc, char** argv)
   guihckStackPushElementById(ctx, "scm-1");
   guihckElementId scmId1 = guihckStackGetElement(ctx);
   guihckContextKeyboardFocus(ctx, scmId1);
-  guihckContextKeyboardEvent(ctx, 0, 0, GUIHCK_KEY_PRESS, 0);
+  guihckContextKeyboardKey(ctx, 0, 0, GUIHCK_KEY_PRESS, 0);
   assert(count == 2);
   count = 0;
   guihckContextKeyboardChar(ctx, 42);
@@ -144,7 +144,7 @@ int main(int argc, char** argv)
   guihckStackPushElementById(ctx, "scm-2");
   guihckElementId scmId2 = guihckStackGetElement(ctx);
   guihckContextKeyboardFocus(ctx, scmId2);
-  guihckContextKeyboardEvent(ctx, 0, 0, GUIHCK_KEY_PRESS, 0);
+  guihckContextKeyboardKey(ctx, 0, 0, GUIHCK_KEY_PRESS, 0);
   assert(count == 0);
   count = 0;
   guihckContextKeyboardChar(ctx, 42);

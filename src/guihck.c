@@ -818,7 +818,7 @@ void* guihckElementGetData(guihckContext* ctx, guihckElementId elementId)
   return element->data;
 }
 
-void guihckContextKeyboardEvent(guihckContext* ctx, guihckKey key, int scancode, guihckKeyAction action, guihckKeyMods mods)
+void guihckContextKeyboardKey(guihckContext* ctx, guihckKey key, int scancode, guihckKeyAction action, guihckKeyMods mods)
 {
   guihckElementId id = ctx->focused;
 

@@ -48,6 +48,8 @@ static SCM guileGetElementProperty(SCM keySymbol);
 static SCM guileGetElementChildCount();
 static SCM guilePopElement();
 static SCM guileSetKeyboardFocus();
+static SCM guileKeyCode(SCM keyName);
+static SCM guileKeyName(SCM keyCode);
 
 void guihckGuileInit()
 {
@@ -112,6 +114,8 @@ void* initGuile(void* data)
   scm_c_define_gsubr("get-element-property", 1, 0, 0, guileGetElementProperty);
   scm_c_define_gsubr("get-element-child-count", 0, 0, 0, guileGetElementChildCount);
   scm_c_define_gsubr("keyboard-focus!", 0, 0, 0, guileSetKeyboardFocus);
+  scm_c_define_gsubr("keyboard", 1, 0, 0, guileKeyCode);
+  scm_c_define_gsubr("keyboard-name", 1, 0, 0, guileKeyName);
 
   scm_c_eval_string(GUIHCK_GUILE_DEFAULT_SCM);
 
@@ -288,3 +292,26 @@ SCM guileSetKeyboardFocus()
   guihckContextKeyboardFocus(threadLocalContext.ctx, guihckStackGetElement(threadLocalContext.ctx));
   return SCM_BOOL_T;
 }
+
+SCM guileKeyCode(SCM keyName)
+{
+  char* keyNameStr;
+  if(scm_is_symbol(keyName))
+    keyNameStr = scm_to_utf8_string(scm_symbol_to_string(keyName));
+  else if(scm_is_string(keyName))
+    keyNameStr = scm_to_utf8_string(keyName);
+  else
+    assert(false && "Key name must be a symbol or a string");
+  guihckKey keyCode = guihckContextGetKeyCode(threadLocalContext.ctx, keyNameStr);
+  free(keyNameStr);
+
+  return scm_from_int32(keyCode);
+}
+
+SCM guileKeyName(SCM keyCode)
+{
+  guihckKey code = scm_to_int32(keyCode);
+  const char* keyName = guihckContextGetKeyName(threadLocalContext.ctx, code);
+  return keyName ? scm_from_utf8_string(keyName) : SCM_UNDEFINED;
+}
+
