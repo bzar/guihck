@@ -1,6 +1,11 @@
 #ifndef GUIHCK_KEYS
 #define GUIHCK_KEYS
 
+#include <stdlib.h>
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 
 /* NOTICE: Keyboard codes correspond to GLFW. GLFW key events should be
  * directly forwardable to guihck. */
@@ -171,6 +176,8 @@
 #define GUIHCK_KEY_MENU               348
 #define GUIHCK_KEY_LAST               GUIHCK_KEY_MENU
 
+#define GUIHCK_KEY_USER               1000
+
 /*! @} */
 
 /*! @defgroup mods Modifier key flags
@@ -189,5 +196,17 @@
 /*! @brief If this bit is set one or more Super keys were held down.
  */
 #define GUIHCK_MOD_SUPER           0x0008
+
+typedef struct guihckDefaultKeyBinding
+{
+  int code;
+  const char* name;
+} guihckDefaultKeyBinding;
+
+const guihckDefaultKeyBinding* guihckGetDefaultKeyBindings(size_t* n);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

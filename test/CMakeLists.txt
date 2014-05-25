@@ -27,3 +27,7 @@ add_test(bind bind)
 add_executable(keyboard keyboard.c)
 target_link_libraries(keyboard guihck)
 add_test(keyboard keyboard)
+
+add_executable(keybind keybind.c)
+target_link_libraries(keybind guihck)
+add_test(keybind keybind)

@@ -20,6 +20,8 @@ typedef struct _guihckContext
   guihckElementId rootElementId;
   chckPool* propertyListeners;
   guihckElementId focused;
+  chckHashTable* keyCodesByName;
+  chckHashTable* keyNamesByCode;
 } _guihckContext;
 
 typedef struct _guihckElementType
@@ -96,6 +98,7 @@ typedef struct _guihckMouseArea
 
 static char pointInRect(float x, float y, const _guihckRect* r);
 static void _guihckPropertyListenerFreeCallback(guihckContext* ctx, guihckElementId listenerId, guihckElementId listenedId, const char* property, SCM value, void* data);
+static void _guihckContextAddDefaultKeybindings(guihckContext* ctx);
 
 void guihckInit()
 {
@@ -123,6 +126,12 @@ guihckContext* guihckContextNew()
   guihckElementProperty(ctx, ctx->rootElementId, "id", scm_from_utf8_string("root"));
   guihckStackPushElement(ctx, ctx->rootElementId);
   ctx->focused = ctx->rootElementId;
+
+  ctx->keyCodesByName = chckHashTableNew(32);
+  ctx->keyNamesByCode = chckHashTableNew(32);
+
+  _guihckContextAddDefaultKeybindings(ctx);
+
   return ctx;
 }
 
@@ -175,6 +184,16 @@ void guihckContextFree(guihckContext* ctx)
   chckPoolFree(ctx->elements);
   chckHashTableFree(ctx->elementTypesByName);
   chckPoolFree(ctx->elementTypes);
+
+  char** keyName;
+  chckHashTableIterator knIter = {NULL, 0};
+  while((keyName = chckHashTableIter(ctx->keyNamesByCode, &knIter)))
+  {
+    free(*keyName);
+  }
+  chckHashTableFree(ctx->keyNamesByCode);
+  chckHashTableFree(ctx->keyCodesByName);
+
   free(ctx);
 }
 
@@ -767,6 +786,32 @@ guihckElementId guihckContextGetKeyboardFocus(guihckContext* ctx)
   return ctx->focused;
 }
 
+void guihckContextAddKeyBinding(guihckContext* ctx, guihckKey keyCode, const char* keyName)
+{
+  if(chckHashTableGet(ctx->keyNamesByCode, keyCode) == NULL)
+  {
+    char* keyNameCopy = strdup(keyName);
+    chckHashTableSet(ctx->keyNamesByCode, keyCode, &keyNameCopy, sizeof(char*));
+  }
+
+  if(chckHashTableStrGet(ctx->keyCodesByName, keyName) == NULL)
+  {
+    chckHashTableStrSet(ctx->keyCodesByName, keyName, &keyCode, sizeof(guihckKey));
+  }
+}
+
+const char* guihckContextGetKeyName(guihckContext* ctx, guihckKey keyCode)
+{
+  const char** result = chckHashTableGet(ctx->keyNamesByCode, keyCode);
+  return result ? *result : NULL;
+}
+
+guihckKey guihckContextGetKeyCode(guihckContext* ctx, const char* keyName)
+{
+  guihckKey* result = chckHashTableStrGet(ctx->keyCodesByName, keyName);
+  return result ? *result : GUIHCK_KEY_UNKNOWN;
+}
+
 void* guihckElementGetData(guihckContext* ctx, guihckElementId elementId)
 {
   guihckElement* element = chckPoolGet(ctx->elements, elementId);
@@ -1230,3 +1275,16 @@ static void _guihckPropertyListenerFreeCallback(guihckContext* ctx, guihckElemen
     free(data);
 }
 
+
+void _guihckContextAddDefaultKeybindings(guihckContext* ctx)
+{
+  size_t n;
+  const guihckDefaultKeyBinding* bindings = guihckGetDefaultKeyBindings(&n);
+
+  unsigned int i;
+  for(i = 0; i < n; ++i)
+  {
+    const guihckDefaultKeyBinding* b = &(bindings[i]);
+    guihckContextAddKeyBinding(ctx, b->code, b->name);
+  }
+}

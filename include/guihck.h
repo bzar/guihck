@@ -6,7 +6,7 @@
 #include <guihckKeys.h>
 
 #ifdef __cplusplus
-extern "C"
+extern "C" {
 #endif
 
 typedef size_t guihckElementId;
@@ -65,6 +65,10 @@ void guihckContextMouseMove(guihckContext* ctx, float sx, float sy, float dx, fl
 
 void guihckContextKeyboardFocus(guihckContext* ctx, guihckElementId elementId);
 guihckElementId guihckContextGetKeyboardFocus(guihckContext* ctx);
+
+void guihckContextAddKeyBinding(guihckContext* ctx, guihckKey keyCode, const char* keyName);
+const char* guihckContextGetKeyName(guihckContext* ctx, guihckKey keyCode);
+guihckKey guihckContextGetKeyCode(guihckContext* ctx, const char* keyName);
 
 void guihckContextKeyboardEvent(guihckContext* ctx, guihckKey key, int scancode, guihckKeyAction action, guihckKeyMods mods);
 void guihckContextKeyboardChar(guihckContext* ctx, unsigned int codepoint);
