@@ -20,24 +20,30 @@
    
 (create-rectangle! 50 50 50 50 '(255 0 255))
 
-(create-elements! 
-  (rectangle '(x 400
-               y 400
-               width 25
-               height 25)
-    (rectangle '(x 10
-                 y 10
-                 width 10
-                 height 10
-                 color (255 0 0)))
-    (rectangle '(x 15
-                 y 15
-                 width 10
-                 height 10
-                 color (0 255 0))
-      (rectangle '(width 5 height 5))))
-  (rectangle '(x 700
-               y 100
-               width 25
-               height 25
-               color (0 0 255))))
+(create-elements!
+  (rectangle
+    (prop 'x 400)
+    (prop 'y 400)
+    (prop 'width 25)
+    (prop 'height 25)
+    (rectangle
+      (prop 'x 10)
+      (prop 'y 10)
+      (prop 'width 10)
+      (prop 'height 10)
+      (prop 'color '(255 0 0)))
+    (rectangle
+      (prop 'x 15)
+      (prop 'y 15)
+      (prop 'width 10)
+      (prop 'height 10)
+      (prop 'color '(0 255 0))
+      (rectangle
+        (prop 'width 5)
+        (prop 'height 5))))
+  (rectangle
+    (prop 'x 700)
+    (prop 'y 100)
+    (prop 'width 25)
+    (prop 'height 25)
+    (prop 'color '(0 0 255))))

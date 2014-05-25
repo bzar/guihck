@@ -1,9 +1,15 @@
 (import (rnrs (6)))
 
 (create-elements!
-  (item '(id item-1 value 0))
-  (item '(id item-2 value (alias (find-element 'item-1) 'value)))
-  (item '(id item-3 value (alias (find-element 'item-2) 'value))))
+  (item
+    (id 'item-1)
+    (prop 'value 0))
+  (item
+    (id 'item-2)
+    (prop 'value '(alias (find-element 'item-1) 'value)))
+  (item
+    (id 'item-3)
+    (prop 'value '(alias (find-element 'item-2) 'value))))
   
 (define (display-all . things) (for-each display things))
 

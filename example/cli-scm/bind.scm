@@ -1,14 +1,18 @@
 (import (rnrs (6)))
 
 (create-elements!
-  (item '(id item-1 value 1))
-  (item '(id item-2 
-          value (bind (observe 'item-1 'value) 
-            (lambda (v) (+ v 1)))))
-  (item '(id item-3 
-          value (bind (observe 'item-2 'value) 
-            (lambda (v) (+ v 1))))))
-  
+  (item
+    (id 'item-1)
+    (prop 'value 1))
+  (item
+    (id 'item-2)
+    (prop 'value (bound '(item-1 value)
+                        (lambda (v) (+ v 1)))))
+  (item
+    (id 'item-3)
+    (prop 'value (bound '(item-2 value)
+                        (lambda (v) (+ v 1))))))
+
 (define (display-all . things) (for-each display things))
 
 (define (test id value)
