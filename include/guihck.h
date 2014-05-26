@@ -73,6 +73,9 @@ guihckKey guihckContextGetKeyCode(guihckContext* ctx, const char* keyName);
 void guihckContextKeyboardKey(guihckContext* ctx, guihckKey key, int scancode, guihckKeyAction action, guihckKeyMods mods);
 void guihckContextKeyboardChar(guihckContext* ctx, unsigned int codepoint);
 
+void guihckContextTime(guihckContext* ctx, double time);
+double guihckContextGetTime(guihckContext* ctx);
+
 guihckElementId guihckContextGetRootElement(guihckContext* ctx);
 
 // Element type

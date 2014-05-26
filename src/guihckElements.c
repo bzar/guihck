@@ -97,8 +97,13 @@ static const char GUIHCK_COLUMN_SCM[] =
     "(define column (column-gen))"
     ;
 
+static const char GUIHCK_TIMER_SCM[] =
+    "(define (timer . args)"
+    "  (define default-args (list (prop 'running #f) (prop 'next-timeout -1) (prop 'interval 0) (prop 'repeat 1) (prop 'on-timeout (lambda () #f))))"
+    "  (create-element 'timer (append default-args args)))";
 
 static void initItem(guihckContext* ctx, guihckElementId id, void* data);
+
 static void initMouseArea(guihckContext* ctx, guihckElementId id, void* data);
 static void destroyMouseArea(guihckContext* ctx, guihckElementId id, void* data);
 static bool updateMouseArea(guihckContext* ctx, guihckElementId id, void* data);
@@ -108,12 +113,16 @@ static bool mouseAreaMouseMove(guihckContext* ctx, guihckElementId id, void* dat
 static bool mouseAreaMouseEnter(guihckContext* ctx, guihckElementId id, void* data, float sx, float sy, float dx, float dy);
 static bool mouseAreaMouseExit(guihckContext* ctx, guihckElementId id, void* data, float sx, float sy, float dx, float dy);
 
+static void initTimer(guihckContext* ctx, guihckElementId id, void* data);
+static bool updateTimer(guihckContext* ctx, guihckElementId id, void* data);
+
 void guihckElementsAddAllTypes(guihckContext* ctx)
 {
   guihckElementsAddItemType(ctx);
   guihckElementsAddMouseAreaType(ctx);
   guihckElementsAddRowType(ctx);
   guihckElementsAddColumnType(ctx);
+  guihckElementsAddTimerType(ctx);
 }
 
 void guihckElementsAddItemType(guihckContext* ctx)
@@ -144,6 +153,20 @@ void guihckElementsAddRowType(guihckContext* ctx)
 void guihckElementsAddColumnType(guihckContext* ctx)
 {
   guihckContextExecuteScript(ctx, GUIHCK_COLUMN_SCM);
+}
+
+void guihckElementsAddTimerType(guihckContext* ctx)
+{
+  guihckElementTypeFunctionMap functionMap = {
+    initTimer,
+    NULL,
+    updateTimer,
+    NULL,
+    NULL,
+    NULL
+  };
+  guihckElementTypeAdd(ctx, "timer", functionMap, 0);
+  guihckContextExecuteScript(ctx, GUIHCK_TIMER_SCM);
 }
 
 void initItem(guihckContext* ctx, guihckElementId id, void* data)
@@ -285,4 +308,56 @@ bool mouseAreaMouseExit(guihckContext* ctx, guihckElementId id, void* data, floa
    guihckStackPopElement(ctx);
   }
   return false;
+}
+
+void initTimer(guihckContext* ctx, guihckElementId id, void* data)
+{
+  (void) data;
+
+  guihckElementAddUpdateProperty(ctx, id, "running");
+}
+
+bool updateTimer(guihckContext* ctx, guihckElementId id, void* data)
+{
+  (void) data;
+
+  bool running = scm_is_true(guihckElementGetProperty(ctx, id, "running"));
+  if(running)
+  {
+    double nextTimeout = scm_to_double(guihckElementGetProperty(ctx, id, "next-timeout"));
+    double current = guihckContextGetTime(ctx);
+
+    if(nextTimeout < 0)
+    {
+      double interval = scm_to_double(guihckElementGetProperty(ctx, id, "interval"));
+      guihckElementProperty(ctx, id, "next-timeout", scm_from_double(current + interval));
+      guihckElementProperty(ctx, id, "cycle", scm_from_int32(0));
+    }
+    else if(current >= nextTimeout)
+    {
+      int repeat = scm_to_int32(guihckElementGetProperty(ctx, id, "repeat"));
+      int cycle = scm_to_int32(guihckElementGetProperty(ctx, id, "cycle"));
+      cycle += 1;
+
+      if(repeat < 0 || repeat > cycle)
+      {
+        double interval = scm_to_double(guihckElementGetProperty(ctx, id, "interval"));
+        guihckElementProperty(ctx, id, "next-timeout", scm_from_double(nextTimeout + interval));
+      }
+      else
+      {
+        running = false;
+        guihckElementProperty(ctx, id, "next-timeout", scm_from_double(-1));
+        guihckElementProperty(ctx, id, "running", SCM_BOOL_F);
+      }
+
+      guihckElementProperty(ctx, id, "cycle", scm_from_int32(cycle));
+      SCM onTimeout = guihckElementGetProperty(ctx, id, "on-timeout");
+      guihckStackPushElement(ctx, id);
+      SCM expression = scm_list_2(onTimeout, scm_from_int32(cycle));
+      guihckContextExecuteExpression(ctx, expression);
+      guihckStackPopElement(ctx);
+    }
+  }
+  return running;
 }

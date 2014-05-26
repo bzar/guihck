@@ -22,6 +22,7 @@ typedef struct _guihckContext
   guihckElementId focused;
   chckHashTable* keyCodesByName;
   chckHashTable* keyNamesByCode;
+  double time;
 } _guihckContext;
 
 typedef struct _guihckElementType
@@ -131,6 +132,8 @@ guihckContext* guihckContextNew()
   ctx->keyNamesByCode = chckHashTableNew(32);
 
   _guihckContextAddDefaultKeybindings(ctx);
+
+  ctx->time = 0;
 
   return ctx;
 }
@@ -907,6 +910,17 @@ void guihckContextKeyboardChar(guihckContext* ctx, unsigned int codepoint)
 
     id = guihckElementGetParent(ctx, id);
   }
+}
+
+void guihckContextTime(guihckContext* ctx, double time)
+{
+  assert(time >= ctx->time && "Backwards time travel not allowed");
+  ctx->time = time;
+}
+
+double guihckContextGetTime(guihckContext* ctx)
+{
+  return ctx->time;
 }
 
 guihckPropertyListenerId guihckElementAddListener(guihckContext* ctx, guihckElementId listenerId, guihckElementId listenedId,

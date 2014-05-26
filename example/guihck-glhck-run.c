@@ -112,6 +112,7 @@ int main(int argc, char** argv)
       }
     }
 
+    guihckContextTime(ctx, glfwGetTime());
     guihckContextUpdate(ctx);
 
     glhckRenderClear(GLHCK_DEPTH_BUFFER_BIT | GLHCK_COLOR_BUFFER_BIT);
