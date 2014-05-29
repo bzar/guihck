@@ -69,7 +69,18 @@ SCM guihckGuileRunScript(guihckContext* ctx, const char* script)
   threadLocalContext.ctxRefs += 1;
 
   SCM result = scm_with_guile(runStringInGuile, &script);
-
+#if 0
+  if(result)
+  {
+    char* resultStr = scm_to_utf8_string(scm_object_to_string(result, SCM_UNDEFINED));
+    printf("RESULT: %s\n", resultStr);
+    free(resultStr);
+  }
+  else
+  {
+    printf("RESULT: NULL\n");
+  }
+#endif
   threadLocalContext.ctxRefs -= 1;
   if(threadLocalContext.ctxRefs <= 0)
   {
@@ -86,6 +97,18 @@ SCM guihckGuileRunExpression(guihckContext* ctx, SCM expression)
   threadLocalContext.ctxRefs += 1;
 
   SCM result = scm_with_guile(runExpressionInGuile, expression);
+#if 0
+  if(result)
+  {
+    char* resultStr = scm_to_utf8_string(scm_object_to_string(result, SCM_UNDEFINED));
+    printf("RESULT: %s\n", resultStr);
+    free(resultStr);
+  }
+  else
+  {
+    printf("RESULT: NULL\n");
+  }
+#endif
 
   threadLocalContext.ctxRefs -= 1;
   if(threadLocalContext.ctxRefs <= 0)
@@ -142,6 +165,8 @@ void* runExpressionInGuile(void* data)
   free(expressionStr);
 #endif
   SCM result = scm_primitive_eval(expression);
+  if(!result)
+    exit(1);
   return result;
 }
 

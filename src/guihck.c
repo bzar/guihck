@@ -54,10 +54,16 @@ typedef struct _guihckPropertyListener
 typedef enum _guihckPropertyType { GUIHCK_PROPERTY_VALUE, GUIHCK_PROPERTY_ALIAS, GUIHCK_PROPERTY_BIND } _guihckPropertyType;
 typedef struct _guihckBoundProperty
 {
-  size_t index;
   guihckPropertyListenerId listenerId;
   SCM value;
+  size_t index;
 } _guihckBoundProperty;
+
+typedef struct _guihckBoundPropertyRef
+{
+  char* propertyName;
+  size_t index;
+} _guihckBoundPropertyRef;
 
 typedef struct _guihckProperty
 {
@@ -99,6 +105,7 @@ typedef struct _guihckMouseArea
 
 static char pointInRect(float x, float y, const _guihckRect* r);
 static void _guihckPropertyListenerFreeCallback(guihckContext* ctx, guihckElementId listenerId, guihckElementId listenedId, const char* property, SCM value, void* data);
+static void _guihckPropertyAliasFreeCallback(guihckContext* ctx, guihckElementId listenerId, guihckElementId listenedId, const char* property, SCM value, void* data);
 static void _guihckContextAddDefaultKeybindings(guihckContext* ctx);
 
 void guihckInit()
@@ -141,46 +148,50 @@ guihckContext* guihckContextNew()
 
 void guihckContextFree(guihckContext* ctx)
 {
-  chckPoolIndex iter = 0;
-  _guihckPropertyListener* listener;
-  while((listener = chckPoolIter(ctx->propertyListeners, &iter)))
   {
-    if(listener->freeCallback)
-      listener->freeCallback(ctx, listener->listenerId, listener->listenedId, listener->propertyName, SCM_UNDEFINED, listener->data);
-    free(listener->propertyName);
-  }
-  chckPoolFree(ctx->propertyListeners);
-
-  iter = 0;
-  guihckElement* current;
-  while ((current = chckPoolIter(ctx->elements, &iter)))
-  {
-    _guihckElementType* type = chckPoolGet(ctx->elementTypes, current->type);
-    if(type->functionMap.destroy)
-      type->functionMap.destroy(ctx, iter - 1, current->data); /* id = iter - 1 */
-
-    if(current->listened)
-      chckIterPoolFree(current->listened);
-
-    _guihckProperty* property;
-    chckHashTableIterator pIter = {NULL, 0};
-    while((property = chckHashTableIter(current->properties, &pIter)))
+    chckPoolIndex iter = 0;
+    _guihckPropertyListener* listener;
+    while((listener = chckPoolIter(ctx->propertyListeners, &iter)))
     {
-      if(property->listeners)
-        chckIterPoolFree(property->listeners);
-
-      if(property->type == GUIHCK_PROPERTY_BIND)
-      {
-        chckIterPoolFree(property->bind.bound);
-      }
+      if(listener->freeCallback)
+        listener->freeCallback(ctx, listener->listenerId, listener->listenedId, listener->propertyName, SCM_UNDEFINED, listener->data);
+      free(listener->propertyName);
     }
+    chckPoolFree(ctx->propertyListeners);
+  }
 
-    if(current->properties)
-      chckHashTableFree(current->properties);
-    if(current->children)
-      chckIterPoolFree(current->children);
-    if(current->data)
-      free(current->data);
+  {
+    chckPoolIndex iter = 0;
+    guihckElement* current;
+    while ((current = chckPoolIter(ctx->elements, &iter)))
+    {
+      _guihckElementType* type = chckPoolGet(ctx->elementTypes, current->type);
+      if(type->functionMap.destroy)
+        type->functionMap.destroy(ctx, iter - 1, current->data); /* id = iter - 1 */
+
+      if(current->listened)
+        chckIterPoolFree(current->listened);
+
+      _guihckProperty* property;
+      chckHashTableIterator pIter = {NULL, 0};
+      while((property = chckHashTableIter(current->properties, &pIter)))
+      {
+        if(property->listeners)
+          chckIterPoolFree(property->listeners);
+
+        if(property->type == GUIHCK_PROPERTY_BIND)
+        {
+          chckIterPoolFree(property->bind.bound);
+        }
+      }
+
+      if(current->properties)
+        chckHashTableFree(current->properties);
+      if(current->children)
+        chckIterPoolFree(current->children);
+      if(current->data)
+        free(current->data);
+    }
   }
 
   chckPoolFree(ctx->mouseAreas);
@@ -188,12 +199,15 @@ void guihckContextFree(guihckContext* ctx)
   chckHashTableFree(ctx->elementTypesByName);
   chckPoolFree(ctx->elementTypes);
 
-  char** keyName;
-  chckHashTableIterator knIter = {NULL, 0};
-  while((keyName = chckHashTableIter(ctx->keyNamesByCode, &knIter)))
   {
-    free(*keyName);
+    char** keyName;
+    chckHashTableIterator knIter = {NULL, 0};
+    while((keyName = chckHashTableIter(ctx->keyNamesByCode, &knIter)))
+    {
+      free(*keyName);
+    }
   }
+
   chckHashTableFree(ctx->keyNamesByCode);
   chckHashTableFree(ctx->keyCodesByName);
 
@@ -406,7 +420,7 @@ void guihckElementRemove(guihckContext* ctx, guihckElementId elementId)
     _guihckElementUpdateChildrenProperty(ctx, parentId);
   }
 
-  // If was focused, focus to root
+  /* If was focused, focus to root */
   if(ctx->focused == elementId)
     ctx->focused = ctx->rootElementId;
 }
@@ -415,7 +429,7 @@ void guihckElementRemove(guihckContext* ctx, guihckElementId elementId)
 SCM guihckElementGetProperty(guihckContext* ctx, guihckElementId elementId, const char* key)
 {
 #if 0
-  printf("guihckElementGetProperty %d %s\n", elementId, key);
+  printf("guihckElementGetProperty %d %s\n", (int) elementId, key);
 #endif
   guihckElement* element = chckPoolGet(ctx->elements, elementId);
   _guihckProperty* prop = chckHashTableStrGet(element->properties, key);
@@ -426,7 +440,8 @@ SCM guihckElementGetProperty(guihckContext* ctx, guihckElementId elementId, cons
   }
 
 #if 0
-  printf(" --> %s\n", scm_to_utf8_string(scm_object_to_string(prop->value, SCM_UNDEFINED)));
+  if(scm_is_eq(prop->value, SCM_UNDEFINED)) printf(" --> UNDEFINED\n");
+  else printf(" --> %s\n", scm_to_utf8_string(scm_object_to_string(prop->value, SCM_UNDEFINED)));
 #endif
 
   return prop->value;
@@ -493,10 +508,9 @@ static void _guihckPropertyCreateAlias(guihckContext* ctx, guihckElementId eleme
 
   guihckElementId targetId = scm_to_uint64(elementValue);
   char* targetPropertyName = scm_to_utf8_string(scm_symbol_to_string(propertyNameValue));
-
   property->alias.listenerId = guihckElementAddListener(ctx, elementId, targetId, targetPropertyName,
                                                         _guihckPropertyAliasListenerCallback, strdup(propertyName),
-                                                        _guihckPropertyListenerFreeCallback);
+                                                        _guihckPropertyAliasFreeCallback);
   property->value = guihckElementGetProperty(ctx, targetId, targetPropertyName);
   if(!scm_is_eq(property->value, SCM_UNDEFINED))
   {
@@ -510,9 +524,16 @@ static void _guihckPropertyBindListenerCallback(guihckContext* ctx, guihckElemen
   (void) listenedId;
   (void) property;
 
-  char* key = data;
+  _guihckBoundPropertyRef* ref = data;
   guihckElement* listener = chckPoolGet(ctx->elements, listenerId);
-  _guihckProperty* listenerProperty = chckHashTableStrGet(listener->properties, key);
+#if 0
+  char* valueStr = scm_to_utf8_string(scm_object_to_string(value, SCM_UNDEFINED));
+  const char* listenerType = ((_guihckElementType*) chckPoolGet(ctx->elementTypes, listener->type))->name;
+  printf("_guihckPropertyBindListenerCallback %d %s %d %s %s\n", (int) listenerId, listenerType, (int) listenedId, property, valueStr);
+  free(valueStr);
+#endif
+
+  _guihckProperty* listenerProperty = chckHashTableStrGet(listener->properties, ref->propertyName);
 
   guihckStackPushElement(ctx, listenerId);
   SCM paramsVector = scm_c_make_vector(chckIterPoolCount(listenerProperty->bind.bound), SCM_UNDEFINED);
@@ -520,10 +541,9 @@ static void _guihckPropertyBindListenerCallback(guihckContext* ctx, guihckElemen
 
   chckPoolIndex iter = 0;
   _guihckBoundProperty* bound;
-  size_t i;
-  for(i = 0; (bound = chckIterPoolIter(listenerProperty->bind.bound, &iter)); ++i)
+  while((bound = chckIterPoolIter(listenerProperty->bind.bound, &iter)))
   {
-    if(i == bound->index)
+    if(bound->index == ref->index)
     {
       if(!scm_is_eq(bound->value, SCM_UNDEFINED))
       {
@@ -541,16 +561,23 @@ static void _guihckPropertyBindListenerCallback(guihckContext* ctx, guihckElemen
     if(scm_is_eq(bound->value, SCM_UNDEFINED))
     {
       hasUndefined = true;
-      break;
     }
 
-    scm_c_vector_set_x(paramsVector, i, bound->value);
+    scm_c_vector_set_x(paramsVector, bound->index, bound->value);
   }
 
   SCM newValue = SCM_UNDEFINED;
   if(!hasUndefined)
   {
     SCM expression = scm_cons(listenerProperty->bind.function, scm_vector_to_list(paramsVector));
+#if 0
+  char* paramsStr = scm_to_utf8_string(scm_object_to_string(paramsVector, SCM_UNDEFINED));
+  printf("PARAMS VECTOR: %s\n", paramsStr);
+  free(paramsStr);
+  char* expressionStr = scm_to_utf8_string(scm_object_to_string(expression, SCM_UNDEFINED));
+  printf("LISTENER EXPR: %s\n", expressionStr);
+  free(expressionStr);
+#endif
     newValue = guihckContextExecuteExpression(ctx, expression);
     if(!scm_is_eq(newValue, SCM_UNDEFINED))
     {
@@ -575,6 +602,8 @@ static void _guihckPropertyCreateBind(guihckContext* ctx, guihckElementId elemen
   guihckStackPushElement(ctx, elementId);
 
   SCM boundVector = scm_vector(boundList);
+  char* paramsStr = scm_to_utf8_string(scm_object_to_string(boundVector, SCM_UNDEFINED));
+  free(paramsStr);
 
   property->bind.function = function;
   scm_gc_protect_object(property->bind.function);
@@ -582,6 +611,7 @@ static void _guihckPropertyCreateBind(guihckContext* ctx, guihckElementId elemen
   size_t numBound = scm_c_vector_length(boundVector);
   property->bind.bound = chckIterPoolNew(8, numBound, sizeof(_guihckBoundProperty));
   SCM paramsVector = scm_c_make_vector(numBound, SCM_UNDEFINED);
+
   bool hasUndefined = false;
   size_t i;
   for(i = 0; i < numBound; ++i)
@@ -595,7 +625,12 @@ static void _guihckPropertyCreateBind(guihckContext* ctx, guihckElementId elemen
 
     _guihckBoundProperty b;
     b.index = i;
-    b.listenerId = guihckElementAddListener(ctx, elementId, boundElementId, boundPropertyName, _guihckPropertyBindListenerCallback, strdup(propertyName),
+    _guihckBoundPropertyRef* ref = calloc(1, sizeof(_guihckBoundPropertyRef));
+    ref->propertyName = strdup(propertyName);
+    ref->index = i;
+
+
+    b.listenerId = guihckElementAddListener(ctx, elementId, boundElementId, boundPropertyName, _guihckPropertyBindListenerCallback, ref,
                                             _guihckPropertyListenerFreeCallback);
 
     b.value = guihckElementGetProperty(ctx, boundElementId, boundPropertyName);
@@ -610,6 +645,7 @@ static void _guihckPropertyCreateBind(guihckContext* ctx, guihckElementId elemen
     }
     SCM param = scm_is_pair(b.value) ? scm_list_2(scm_sym_quote, b.value) : b.value;
     scm_c_vector_set_x(paramsVector, i,  param);
+
     chckIterPoolAdd(property->bind.bound, &b, NULL);
   }
 
@@ -620,6 +656,9 @@ static void _guihckPropertyCreateBind(guihckContext* ctx, guihckElementId elemen
   else
   {
     SCM expression = scm_cons(property->bind.function, scm_vector_to_list(paramsVector));
+    char* expressionStr = scm_to_utf8_string(scm_object_to_string(expression, SCM_UNDEFINED));
+    free(expressionStr);
+
     property->value = guihckContextExecuteExpression(ctx, expression);
     scm_gc_protect_object(property->value);
   }
@@ -658,12 +697,12 @@ static void _guihckPropertyCreate(guihckContext* ctx, guihckElementId elementId,
 
 void guihckElementProperty(guihckContext* ctx, guihckElementId elementId, const char* key, SCM value)
 {
+  guihckElement* element = chckPoolGet(ctx->elements, elementId);
 #if 0
   char* valueStr = scm_to_utf8_string(scm_object_to_string(value, SCM_UNDEFINED));
-  printf("guihckElementProperty %d %s %s\n", elementId, key, valueStr);
+  printf("guihckElementProperty %s %d %s %s\n", ((_guihckElementType*)chckPoolGet(ctx->elementTypes, element->type))->name, (int) elementId, key, valueStr);
   free(valueStr);
 #endif
-  guihckElement* element = chckPoolGet(ctx->elements, elementId);
   _guihckProperty* existing = chckHashTableStrGet(element->properties, key);
 
   /* Property is an alias, delegate and return */
@@ -845,11 +884,11 @@ void guihckContextKeyboardKey(guihckContext* ctx, guihckKey key, int scancode, g
     modsScm = scm_cons(scm_from_utf8_symbol("super"), modsScm);
   modsScm = scm_list_2(scm_sym_quote, modsScm);
 
-  // Move up the element tree until someone handles the event
+  /* Move up the element tree until someone handles the event */
   bool handled = false;
   while(!handled && id != GUIHCK_NO_PARENT)
   {
-    // First attempt to call native handler
+    /* First attempt to call native handler */
     guihckElement* element = chckPoolGet(ctx->elements, id);
     _guihckElementType* elementType = chckPoolGet(ctx->elementTypes, element->type);
     if(elementType->functionMap.keyChar)
@@ -857,7 +896,7 @@ void guihckContextKeyboardKey(guihckContext* ctx, guihckKey key, int scancode, g
       handled = elementType->functionMap.keyEvent(ctx, id, key, scancode, action, mods, element->data);
     }
 
-    // Second try to call a script handler
+    /* Second try to call a script handler */
     if(!handled)
     {
       SCM handler = guihckElementGetProperty(ctx, id, "on-key");
@@ -881,11 +920,11 @@ void guihckContextKeyboardChar(guihckContext* ctx, unsigned int codepoint)
   guihckElementId id = ctx->focused;
   SCM codepointChar = scm_integer_to_char(scm_from_uint32(codepoint));
 
-  // Move up the element tree until someone handles the event
+  /* Move up the element tree until someone handles the event */
   bool handled = false;
   while(!handled && id != GUIHCK_NO_PARENT)
   {
-    // First attempt to call native handler
+    /* First attempt to call native handler */
     guihckElement* element = chckPoolGet(ctx->elements, id);
     _guihckElementType* elementType = chckPoolGet(ctx->elementTypes, element->type);
     if(elementType->functionMap.keyChar)
@@ -893,7 +932,7 @@ void guihckContextKeyboardChar(guihckContext* ctx, unsigned int codepoint)
       handled = elementType->functionMap.keyChar(ctx, id, codepoint, element->data);
     }
 
-    // Second try to call a script handler
+    /* Second try to call a script handler */
     if(!handled)
     {
       SCM handler = guihckElementGetProperty(ctx, id, "on-char");
@@ -1045,28 +1084,28 @@ void guihckStackPushElementById(guihckContext* ctx, const char* idValue)
 {
   SCM idstr = scm_string_to_symbol(scm_from_utf8_string(idValue));
 
-  // Start search from current
+  /* Start search from current */
   guihckElementId initialId = *(guihckElementId*) chckIterPoolGetLast(ctx->stack);
   if(scm_is_eq(guihckElementGetProperty(ctx, initialId, "id"), idstr))
   {
-    // Result found
+    /* Result found */
     guihckStackPushElement(ctx, initialId);
     return;
   }
 
-  // Search ancestors
+  /* Search ancestors */
   guihckElementId ancestorId = initialId;
   while((ancestorId = guihckElementGetParent(ctx, ancestorId)) != GUIHCK_NO_PARENT)
   {
     if(scm_is_eq(guihckElementGetProperty(ctx, ancestorId, "id"), idstr))
     {
-      // Result found
+      /* Result found */
       guihckStackPushElement(ctx, ancestorId);
       return;
     }
   }
 
-  // Search children with BFS
+  /* Search children with BFS */
   chckRingPool* queue = chckRingPoolNew(16, 16, sizeof(guihckElementId));
   chckRingPoolPushEnd(queue, &initialId);
 
@@ -1075,13 +1114,13 @@ void guihckStackPushElementById(guihckContext* ctx, const char* idValue)
   {
     if(scm_is_eq(guihckElementGetProperty(ctx, *id, "id"), idstr))
     {
-      // Result found
+      /* Result found */
       guihckStackPushElement(ctx, *id);
       chckRingPoolFree(queue);
       return;
     }
 
-    // Add children to queue
+    /* Add children to queue */
     unsigned int i;
     for(i = 0; i < guihckElementGetChildCount(ctx, *id); ++i)
     {
@@ -1091,7 +1130,7 @@ void guihckStackPushElementById(guihckContext* ctx, const char* idValue)
   }
   chckRingPoolFree(queue);
 
-  // Search siblings
+  /* Search sibling */
   guihckElementId parentId = guihckElementGetParent(ctx, initialId);
   if(parentId != GUIHCK_NO_PARENT)
   {
@@ -1106,7 +1145,7 @@ void guihckStackPushElementById(guihckContext* ctx, const char* idValue)
 
       if(scm_is_eq(guihckElementGetProperty(ctx, siblingId, "id"), idstr))
       {
-        // Result found
+        /* Result found */
         guihckStackPushElement(ctx, siblingId);
         return;
       }
@@ -1286,9 +1325,26 @@ static void _guihckPropertyListenerFreeCallback(guihckContext* ctx, guihckElemen
   (void) value;
 
   if(data)
-    free(data);
+  {
+    _guihckBoundPropertyRef* ref = data;
+    free(ref->propertyName);
+    free(ref);
+  }
 }
 
+static void _guihckPropertyAliasFreeCallback(guihckContext* ctx, guihckElementId listenerId, guihckElementId listenedId, const char* property, SCM value, void* data)
+{
+  (void) ctx;
+  (void) listenerId;
+  (void) listenedId;
+  (void) property;
+  (void) value;
+
+  if(data)
+  {
+    free(data);
+  }
+}
 
 void _guihckContextAddDefaultKeybindings(guihckContext* ctx)
 {

@@ -29,5 +29,6 @@ add_executable(scm-test-runner scm-test-runner.c)
 target_link_libraries(scm-test-runner guihck)
 add_test(alias scm-test-runner scm/alias.scm)
 add_test(bind scm-test-runner scm/bind.scm)
+add_test(bound scm-test-runner scm/bound.scm)
 
 FILE(COPY scm DESTINATION .)

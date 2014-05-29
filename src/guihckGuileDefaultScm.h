@@ -2,13 +2,22 @@
 #define GUIHCKGUILEDEFAULTSCM_H
 
 static const char GUIHCK_GUILE_DEFAULT_SCM[] =
-
     "(define (flatmap f xs) (apply append (map f xs)))"
 
     "(define (create-elements! . elements)"
     "  (for-each (lambda (e) (e)) elements))"
 
-    "(define (create-element type args)"
+    "(define (create-element type nested-args)"
+    "  (define (flatten-args as)"
+    "    (define (flatten-arg a)"
+    "      (define (flattenable? a) (and (list? a) (eq? (car a) 'arg-list)))"
+    "      (if (flattenable? a)"
+    "        (flatten-args (cdr a))"
+    "        (list a)))"
+    "    (flatmap flatten-arg as))"
+
+    "  (define args (flatten-args nested-args))"
+
     "  (define (set-id)"
     "    (define (id? d) (and (list? d) (eq? (car d) 'id)))"
     "    (for-each (lambda (id) (set-element-property! 'id (cadr id)))"
@@ -39,6 +48,8 @@ static const char GUIHCK_GUILE_DEFAULT_SCM[] =
     "    (if (procedure? (get-element-property 'init))"
     "      ((get-element-property 'init)))"
     "    (pop-element!)))"
+
+    "(define (arg-list args) (cons 'arg-list args))"
 
     "(define (prop key value) (list 'prop key value))"
     "(define (id value) (list 'id value))"
@@ -119,12 +130,13 @@ static const char GUIHCK_GUILE_DEFAULT_SCM[] =
     "    (cond ((eq? e 'parent) (parent))"
     "          ((eq? e 'this) (this))"
     "          (else (find-element e))))"
-    "  (define (iter lst result)"
+    "  (define (pairs lst)"
     "    (if (null? lst)"
-    "      result"
-    "      (iter (cddr lst) "
-    "            (cons (cons (resolve (car lst)) (cadr lst)) result))))"
-    "  (iter vals '()))"
+    "      '()"
+    "      (cons (cons (car lst) (cadr lst)) (pairs (cddr lst)))))"
+    "  (define (process pair)"
+    "    (cons (resolve (car pair)) (cdr pair)))"
+    "  (map process (pairs vals)))"
 
     "(define bind"
     "  (case-lambda"
