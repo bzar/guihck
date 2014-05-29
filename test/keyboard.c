@@ -130,7 +130,8 @@ int main(int argc, char** argv)
   assert(count == 2);
 
   guihckElementsAddItemType(ctx);
-  guihckContextExecuteScript(ctx, TEST_SCM);
+  SCM result = guihckContextExecuteScript(ctx, TEST_SCM);
+  assert(result);
 
   count = 0;
   guihckStackPushElementById(ctx, "scm-1");

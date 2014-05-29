@@ -16,14 +16,6 @@ add_executable(listener listener.c)
 target_link_libraries(listener guihck)
 add_test(listener listener)
 
-add_executable(alias alias.c)
-target_link_libraries(alias guihck)
-add_test(alias alias)
-
-add_executable(bind bind.c)
-target_link_libraries(bind guihck)
-add_test(bind bind)
-
 add_executable(keyboard keyboard.c)
 target_link_libraries(keyboard guihck)
 add_test(keyboard keyboard)
@@ -31,3 +23,11 @@ add_test(keyboard keyboard)
 add_executable(keybind keybind.c)
 target_link_libraries(keybind guihck)
 add_test(keybind keybind)
+
+# Pure SCM tests
+add_executable(scm-test-runner scm-test-runner.c)
+target_link_libraries(scm-test-runner guihck)
+add_test(alias scm-test-runner scm/alias.scm)
+add_test(bind scm-test-runner scm/bind.scm)
+
+FILE(COPY scm DESTINATION .)

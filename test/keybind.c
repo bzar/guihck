@@ -4,9 +4,6 @@
 #include <stdio.h>
 #include <assert.h>
 
-const char TEST_SCM[] = ""
-;
-
 int main(int argc, char** argv)
 {
   (void) argc;
