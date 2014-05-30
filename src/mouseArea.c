@@ -1,6 +1,6 @@
 #include "internal.h"
 
-static char pointInRect(float x, float y, const _guihckRect* r);
+static bool pointInRect(float x, float y, const _guihckRect* r);
 
 void guihckContextMouseDown(guihckContext* ctx, float x, float y, int button)
 {
@@ -112,7 +112,7 @@ void guihckMouseAreaGetRect(guihckContext* ctx, guihckMouseAreaId mouseAreaId, f
   }
 }
 
-char pointInRect(float x, float y, const _guihckRect* r)
+bool pointInRect(float x, float y, const _guihckRect* r)
 {
   return x >= r->x && x <= r->x + r->w && y >= r->y && y <= r->y + r->h;
 }
