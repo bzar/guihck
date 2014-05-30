@@ -156,5 +156,16 @@ static const char GUIHCK_GUILE_DEFAULT_SCM[] =
     "      (push-element! element)"
     "      (keyboard-focus!)"
     "      (pop-element!))))"
+
+    "(define (call first . rest)"
+    "  (define (do-call element property args)"
+    "    (push-element! element)"
+    "    (let ((result (apply (get-element-property property) args)))"
+    "      (pop-element!)"
+    "      result))"
+    "  (if (integer? first)"
+    "    (do-call first (car rest) (cdr rest))"
+    "    (do-call (get-element) first rest)))"
+
     ;
 #endif // GUIHCKGUILEDEFAULTSCM_H
