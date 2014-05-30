@@ -10,6 +10,14 @@
 #define WIDTH 800
 #define HEIGHT 480
 
+bool running = true;
+
+SCM quit()
+{
+  running = false;
+  return SCM_UNSPECIFIED;
+}
+
 int main(int argc, char** argv)
 {
   if(argc != 2)
@@ -51,6 +59,7 @@ int main(int argc, char** argv)
   guihckInit();
 
   guihckContext* ctx = guihckContextNew();
+  guihckRegisterFunction("quit", 0, 0, 0, quit);
   guihckElementsAddAllTypes(ctx);
   guihckGlhckAddAllTypes(ctx);
   guihckContextExecuteScriptFile(ctx, argv[1]);
@@ -59,7 +68,6 @@ int main(int argc, char** argv)
 
   float mx = 0;
   float my = 0;
-  char running = 1;
   while(running)
   {
     glfwPollEvents();
@@ -75,7 +83,7 @@ int main(int argc, char** argv)
       {
         case GLFWHCK_EVENT_WINDOW_CLOSE:
         {
-          running = 0;
+          running = false;
           break;
         }
         case GLFWHCK_EVENT_MOUSE_BUTTON:
