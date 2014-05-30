@@ -102,7 +102,8 @@ guihckPropertyListenerId guihckElementAddListener(guihckContext* ctx, guihckElem
                                                   const char* propertyName, guihckPropertyListenerCallback callback, void* data,
                                                   guihckPropertyListenerFreeCallback freeCallback);
 void guihckElementRemoveListener(guihckContext* ctx, guihckPropertyListenerId propertyListenerId);
-
+bool guihckElementGetVisible(guihckContext* ctx, guihckElementId elementId);
+void guihckElementVisible(guihckContext* ctx, guihckElementId elementId, bool value);
 // Mouse area
 
 guihckMouseAreaId guihckMouseAreaNew(guihckContext* ctx, guihckElementId elementId, guihckMouseAreaFunctionMap functionMap);

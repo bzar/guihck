@@ -141,14 +141,31 @@ void guihckContextUpdate(guihckContext* ctx)
 
 void guihckContextRender(guihckContext* ctx)
 {
-  chckPoolIndex iter = 0;
-  guihckElement* current;
-  while ((current = chckPoolIter(ctx->elements, &iter)))
+  chckRingPool* stack = chckRingPoolNew(64, 64, sizeof(guihckElementId));
+  chckRingPoolPushEnd(stack, &ctx->rootElementId);
+
+  guihckElementId* elementId;
+  while ((elementId = chckRingPoolPopLast(stack)))
   {
-    _guihckElementType* type = chckPoolGet(ctx->elementTypes, current->type);
+    if(!guihckElementGetVisible(ctx, *elementId))
+      continue;
+
+    _guihckElement* element = chckPoolGet(ctx->elements, *elementId);
+
+    _guihckElementType* type = chckPoolGet(ctx->elementTypes, element->type);
     if(type->functionMap.render)
-      type->functionMap.render(ctx, iter - 1, current->data); /* id = iterator - 1 */
+    {
+      type->functionMap.render(ctx, *elementId, element->data);
+    }
+
+    chckPoolIndex iter = 0;
+    guihckElementId* childId;
+    while((childId = chckIterPoolIter(element->children, &iter)))
+    {
+      chckRingPoolPushEnd(stack, childId);
+    }
   }
+  chckRingPoolFree(stack);
 }
 
 guihckElementId guihckContextGetRootElement(guihckContext* ctx)

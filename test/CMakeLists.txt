@@ -12,6 +12,10 @@ add_executable(simple simple.c)
 target_link_libraries(simple guihck)
 add_test(simple simple)
 
+add_executable(visible visible.c)
+target_link_libraries(visible guihck)
+add_test(visible visible)
+
 add_executable(listener listener.c)
 target_link_libraries(listener guihck)
 add_test(listener listener)

@@ -348,6 +348,24 @@ void guihckElementRemoveListener(guihckContext* ctx, guihckPropertyListenerId pr
   chckPoolRemove(ctx->propertyListeners, propertyListenerId);
 }
 
+bool guihckElementGetVisible(guihckContext* ctx, guihckElementId elementId)
+{
+  SCM visible = guihckElementGetProperty(ctx, elementId, "visible");
+  if(scm_is_eq(visible, SCM_UNDEFINED))
+  {
+    guihckElementVisible(ctx, elementId, true);
+    return true;
+  }
+  else
+  {
+    return scm_to_bool(visible);
+  }
+}
+
+void guihckElementVisible(guihckContext* ctx, guihckElementId elementId, bool value)
+{
+  guihckElementProperty(ctx, elementId, "visible", scm_from_bool(value));
+}
 
 /*
  * Private
