@@ -41,10 +41,12 @@
                    (set-prop! (parent) 'direction 1)))
                 (else (set-prop! (parent) 'phase next-phase)))))))))
 
+(define kitt-7 (kitt 7))
+(define kitt-9 (kitt 9))
+
 (create-elements!
   (column (prop 'spacing 64)
     (prop 'x (bound '(this width) (lambda (w) (/ (- 800 w) 2))))
     (prop 'y (bound '(this height) (lambda (h) (/ (- 480 h) 2))))
-    ((kitt 7))
-    ((kitt 9))
-    ))
+    (kitt-7)
+    (kitt-9)))
