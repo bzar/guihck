@@ -144,8 +144,11 @@ static const char GUIHCK_GUILE_DEFAULT_SCM[] =
     "    ((element property callback)"
     "      (add-element-property-listener! element property callback))))"
 
-    "(define (bound bindings callback)"
-    "  (list 'bind (lambda () (apply observe bindings)) callback))"
+    "(define bound"
+    "  (case-lambda"
+    "    ((bindings) (bound bindings identity))"
+    "    ((bindings callback)"
+    "     (list 'bind (lambda () (apply observe bindings)) callback))))"
 
     "(define unbind remove-element-property-listener!)"
 

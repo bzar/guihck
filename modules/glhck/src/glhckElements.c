@@ -37,6 +37,39 @@ static const char GUIHCK_GLHCK_IMAGE_SCM[] =
     "  (create-element 'image (append default-args args)))"
     ;
 
+static const char GUIHCK_GLHCK_TEXT_INPUT_SCM[] =
+    "(define (text-input-gen)"
+    "  (define (append-char! c)"
+    "    (set-prop! 'text"
+    "      (list->string"
+    "        (append"
+    "          (string->list"
+    "            (get-prop 'text)) (list c)))))"
+    "  (define (pop-char!)"
+    "    (let ((current-text (get-prop 'text)))"
+    "      (if (> (string-length current-text) 0)"
+    "        (set-prop! 'text (string-drop-right current-text 1)))))"
+
+    "  (define (handle-key! key scancode action mods)"
+    "    (cond ((and (= key (keyboard 'backspace))"
+    "                (not (eq? action 'release)))"
+    "          (pop-char!))))"
+
+    "  (composite item"
+    "    (prop 'on-char append-char!)"
+    "    (prop 'on-key handle-key!)"
+    "    (prop 'text '(alias (find-element 'text-content) 'text))"
+    "    (prop 'color '(alias (find-element 'text-content) 'color))"
+    "    (prop 'size '(alias (find-element 'text-content) 'size))"
+    "    (text"
+    "      (id 'text-content))"
+    "    (mouse-area "
+    "      (prop 'width (bound '(parent width)))"
+    "      (prop 'height (bound '(parent height)))"
+    "      (prop 'on-mouse-down (lambda (b x y) (focus! (parent)))))))"
+
+    "(define text-input (text-input-gen))";
+
 static void initRectangle(guihckContext* ctx, guihckElementId id, void* data);
 static void destroyRectangle(guihckContext* ctx, guihckElementId id, void* data);
 static bool updateRectangle(guihckContext* ctx, guihckElementId id, void* data);
@@ -71,6 +104,7 @@ void guihckGlhckAddAllTypes(guihckContext* ctx)
   guihckGlhckAddRectangleType(ctx);
   guihckGlhckAddTextType(ctx);
   guihckGlhckAddImageType(ctx);
+  guihckGlhckAddTextInputType(ctx);
 }
 
 void guihckGlhckAddRectangleType(guihckContext* ctx)
@@ -414,3 +448,9 @@ void renderImage(guihckContext* ctx, guihckElementId id, void* data)
   _guihckGlhckImage* d = data;
   glhckObjectDraw(d->object);
 }
+
+void guihckGlhckAddTextInputType(guihckContext* ctx)
+{
+  guihckContextExecuteScript(ctx, GUIHCK_GLHCK_TEXT_INPUT_SCM);
+}
+

@@ -45,6 +45,7 @@ guihckElementId guihckElementNew(guihckContext* ctx, guihckElementTypeId typeId,
     _guihckElementUpdateChildrenProperty(ctx, parentId);
   }
 
+  guihckElementProperty(ctx, id, "focus", SCM_BOOL_F);
   return id;
 }
 
