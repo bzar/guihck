@@ -8,7 +8,7 @@
     (prop 'width 64)
     (prop 'height 32)
     (prop 'color '(240 240 240))
-    (prop 'on-clicked '(alias (find-element 'mouse-area) 'on-mouse-down))
+    (alias 'on-clicked 'mouse-area 'on-mouse-down)
     (text 
       (prop 'text "Button!")
       (prop 'x center-x)
@@ -18,9 +18,9 @@
       (id 'mouse-area)
       (prop 'width (bound '(parent width) identity))
       (prop 'height (bound '(parent height) identity))
-      (prop 'on-mouse-down (lambda (b x y)
+      (method 'on-mouse-down (lambda (b x y)
         (set-prop! (parent) 'color '(255 255 255))))
-      (prop 'on-mouse-up (lambda (b x y)
+      (method 'on-mouse-up (lambda (b x y)
         (set-prop! (parent) 'color '(240 240 240)))))))
 (define button (button-gen))
 
@@ -40,5 +40,5 @@
       (button 
         (prop 'height 64))
       (button 
-        (prop 'on-clicked (lambda (b x y) 
-          (set-prop! (parent) 'color '(255 0 0))))))))
+        (method 'on-clicked (lambda (b x y) 
+          (set-prop! 'color '(255 0 0))))))))

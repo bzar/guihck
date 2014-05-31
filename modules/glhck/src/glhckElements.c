@@ -58,15 +58,15 @@ static const char GUIHCK_GLHCK_TEXT_INPUT_SCM[] =
     "  (composite item"
     "    (prop 'on-char append-char!)"
     "    (prop 'on-key handle-key!)"
-    "    (prop 'text '(alias (find-element 'text-content) 'text))"
-    "    (prop 'color '(alias (find-element 'text-content) 'color))"
-    "    (prop 'size '(alias (find-element 'text-content) 'size))"
+    "    (alias 'text 'text-content 'text)"
+    "    (alias 'color 'text-content 'color)"
+    "    (alias 'size 'text-content 'size)"
     "    (text"
     "      (id 'text-content))"
     "    (mouse-area "
     "      (prop 'width (bound '(parent width)))"
     "      (prop 'height (bound '(parent height)))"
-    "      (prop 'on-mouse-down (lambda (b x y) (focus! (parent)))))))"
+    "      (method 'on-mouse-down (lambda (b x y) (focus! (parent)))))))"
 
     "(define text-input (text-input-gen))";
 

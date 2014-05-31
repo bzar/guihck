@@ -3,15 +3,16 @@
     (prop 'text "")
     (prop 'size 32)
     (prop 'highlight #f)
-    (prop 'on-click '(alias (find-element 'ma) 'on-mouse-up))
-    (prop 'color (bound '(this highlight) (lambda (highlighted) (if highlighted '(128 128 255) '(64 64 255)))))
+    (alias 'on-click 'ma 'on-mouse-up)
+    (prop 'color (bound '(this highlight) (lambda (highlighted) 
+      (if highlighted '(128 128 255) '(64 64 255)))))
     
     (mouse-area
       (id 'ma)
-      (prop 'width '(alias (parent) 'width))
-      (prop 'height '(alias (parent) 'height))
-      (prop 'on-mouse-enter (lambda (sx sy dx dy) (set-prop! (parent) 'highlight #t)))
-      (prop 'on-mouse-exit (lambda (sx sy dx dy) (set-prop! (parent) 'highlight #f))))))
+      (alias 'width 'parent 'width)
+      (alias 'height 'parent 'height)
+      (method 'on-mouse-enter (lambda (sx sy dx dy) (set-prop! (parent) 'highlight #t)))
+      (method 'on-mouse-exit (lambda (sx sy dx dy) (set-prop! (parent) 'highlight #f))))))
 
 (define splash-screen
   (composite rectangle
@@ -31,13 +32,13 @@
       (menu-button
         (prop 'text "New Game")
         (prop 'size 32)
-        (prop 'on-click (lambda (b x y) 
+        (method 'on-click (lambda (b x y) 
           (set-prop! (find-element 'app) 'view "game"))))
         
       (menu-button
         (prop 'text "Quit")
         (prop 'size 32)
-        (prop 'on-click (lambda (b x y) 
+        (method 'on-click (lambda (b x y) 
           (quit)))))))
 
 (define (game-gen)
@@ -171,10 +172,10 @@
       (prop 'vy 0))
       
     (timer
-      (prop 'running (bound '(game visible) identity))
+      (prop 'running (bound '(game visible)))
       (prop 'interval (/ 1 60))
       (prop 'repeat -1)
-      (prop 'on-timeout (lambda (c) (call (parent) 'update))))
+      (method 'on-timeout (lambda (c) (call (parent) 'update))))
     ))
 (define game (game-gen))
 

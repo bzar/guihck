@@ -1,4 +1,5 @@
 #include "internal.h"
+
 #include <assert.h>
 
 static void _guihckElementUpdateChildrenProperty(guihckContext* ctx, guihckElementId elementId);
@@ -169,6 +170,7 @@ void guihckElementProperty(guihckContext* ctx, guihckElementId elementId, const 
   {
     guihckPropertyListenerId plid = existing->alias.listenerId;
     _guihckPropertyListener* listener = chckPoolGet(ctx->propertyListeners, plid);
+
     guihckElementProperty(ctx, listener->listenedId, listener->propertyName, value);
     return;
   }
@@ -461,8 +463,8 @@ void _guihckPropertyCreateAlias(guihckContext* ctx, guihckElementId elementId, c
   SCM elementExpression = SCM_CADR(value);
   SCM propertyNameExpression = SCM_CADDR(value);
   guihckStackPushElement(ctx, elementId);
-  SCM elementValue = guihckContextExecuteExpression(ctx, elementExpression);
-  SCM propertyNameValue = guihckContextExecuteExpression(ctx, propertyNameExpression);
+  SCM elementValue = elementExpression;
+  SCM propertyNameValue = propertyNameExpression;
   guihckStackPopElement(ctx);
 
   guihckElementId targetId = scm_to_uint64(elementValue);

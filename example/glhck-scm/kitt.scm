@@ -28,7 +28,7 @@
       (prop 'interval 0.1)
       (prop 'running #t)
       (prop 'repeat -1)
-      (prop 'on-timeout (lambda (c)
+      (method 'on-timeout (lambda (c)
         (let ((next-phase (+ (get-prop (parent) 'phase)
                              (get-prop (parent) 'direction))))
           (cond ((> next-phase num-parts)

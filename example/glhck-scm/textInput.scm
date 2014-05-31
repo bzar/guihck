@@ -5,8 +5,8 @@
     (prop 'color (bound '(input focus) 
       (lambda (focus)
         (if focus '(255 255 255) '(200 200 200)))))
-    (prop 'text-color '(alias (find-element 'input) 'color))
-    (prop 'text '(alias (find-element 'input) 'text))
+    (alias 'text-color 'input 'color)
+    (alias 'text 'input 'text)
     (prop 'init 
       (lambda () 
         (bind 'focus 
