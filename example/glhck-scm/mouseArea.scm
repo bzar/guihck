@@ -6,8 +6,7 @@
     (prop 'height 200)
     
     (mouse-area 
-      (prop 'width (bound '(parent width)))
-      (prop 'height (bound '(parent height)))
+      (fill-parent)
       (prop 'color '(0 0 255))
       (method 'on-mouse-down (lambda (b x y) 
         (set-prop! (find-element 'button) 'color '(0 0 255))))

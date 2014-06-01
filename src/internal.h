@@ -7,6 +7,17 @@
 
 #define GUIHCK_NO_PARENT SIZE_MAX
 
+#if defined(_MSC_VER)
+# define _GUIHCK_TLS __declspec(thread)
+# define _GUIHCK_TLS_FOUND
+#elif defined(__GNUC__)
+# define _GUIHCK_TLS __thread
+# define _GUIHCK_TLS_FOUND
+#else
+# define _GUIHCK_TLS
+# warning "No Thread-local storage! Multi-threaded guihck applications may have unexpected behaviour!"
+#endif
+
 typedef struct _guihckContext
 {
   chckPool* elements;

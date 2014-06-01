@@ -10,8 +10,7 @@
       (prop 'color '(24 24 24)))
     (mouse-area
       (id 'mouse-area)
-      (prop 'width (bound '(parent width)))
-      (prop 'height (bound '(parent height)))
+            (fill-parent)
       (method 'on-mouse-down (lambda (b x y)
         (set-prop! (parent) 'color '(255 255 255))))
       (method 'on-mouse-up (lambda (b x y)

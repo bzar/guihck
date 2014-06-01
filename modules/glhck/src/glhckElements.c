@@ -3,6 +3,17 @@
 #include "glhck/glhck.h"
 #include <stdio.h>
 
+#if defined(_MSC_VER)
+# define _GUIHCK_GLHCK_TLS __declspec(thread)
+# define _GUIHCK_GLHCK_TLS_FOUND
+#elif defined(__GNUC__)
+# define _GUIHCK_GLHCK_TLS __thread
+# define _GUIHCK_GLHCK_TLS_FOUND
+#else
+# define _GUIHCK_GLHCK_TLS
+# warning "No Thread-local storage! Multi-threaded guihck applications may have unexpected behaviour!"
+#endif
+
 static const char GUIHCK_GLHCK_RECTANGLE_SCM[] =
     "(define (rectangle . args)"
     "  (define default-args (list"
@@ -75,9 +86,16 @@ static void destroyRectangle(guihckContext* ctx, guihckElementId id, void* data)
 static bool updateRectangle(guihckContext* ctx, guihckElementId id, void* data);
 static void renderRectangle(guihckContext* ctx, guihckElementId id, void* data);
 
-typedef struct _guihckGlhckText
+typedef struct _guihckGlhckTextContext
 {
   glhckText* text;
+  int textRefs;
+} _guihckGlhckTextContext;
+
+static _GUIHCK_GLHCK_TLS _guihckGlhckTextContext textThreadLocalContext = {NULL, 0};
+
+typedef struct _guihckGlhckText
+{
   unsigned int font;
   glhckObject* object;
   char* content;
@@ -206,9 +224,14 @@ void guihckGlhckAddTextType(guihckContext* ctx)
 
 void initText(guihckContext* ctx, guihckElementId id, void* data)
 {
+  if(textThreadLocalContext.textRefs == 0)
+  {
+    textThreadLocalContext.text = glhckTextNew(512, 512);
+  }
+  textThreadLocalContext.textRefs += 1;
+
   _guihckGlhckText* d = data;
-  d->text = glhckTextNew(256, 256);
-  d->font = glhckTextFontNewKakwafont(d->text, NULL);
+  d->font = glhckTextFontNewKakwafont(textThreadLocalContext.text, NULL);
   d->object = glhckPlaneNew(1.0, 1.0);
   glhckMaterial* m = glhckMaterialNew(NULL);
   glhckObjectMaterial(d->object, m);
@@ -228,11 +251,17 @@ void destroyText(guihckContext* ctx, guihckElementId id, void* data)
   (void) id;
 
   _guihckGlhckText* d = data;
-  glhckTextFontFree(d->text, d->font);
-  glhckTextFree(d->text);
+  glhckTextFontFree(textThreadLocalContext.text, d->font);
   glhckObjectFree(d->object);
   if(d->content)
     free(d->content);
+
+  textThreadLocalContext.textRefs -= 1;
+  if(textThreadLocalContext.textRefs == 0)
+  {
+    glhckTextFree(textThreadLocalContext.text);
+    textThreadLocalContext.text = NULL;
+  }
 }
 
 bool updateText(guihckContext* ctx, guihckElementId id, void* data)
@@ -251,7 +280,7 @@ bool updateText(guihckContext* ctx, guihckElementId id, void* data)
       if(strlen(textContentStr) > 0)
       {
         float size = scm_is_real(textSize)  ? scm_to_double(textSize) : 12;
-        glhckTexture* texture = glhckTextRTT(d->text, d->font, size, textContentStr, glhckTextureDefaultLinearParameters());
+        glhckTexture* texture = glhckTextRTT(textThreadLocalContext.text, d->font, size, textContentStr, glhckTextureDefaultLinearParameters());
         glhckMaterialTexture(glhckObjectGetMaterial(d->object), texture);
         glhckTextureFree(texture);
       }
