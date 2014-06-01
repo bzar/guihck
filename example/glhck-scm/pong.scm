@@ -1,23 +1,19 @@
 (define menu-button
   (composite text
-    (prop 'text "")
     (prop 'size 32)
-    (prop 'highlight #f)
-    (alias 'on-click 'ma 'on-mouse-up)
-    (prop 'color (bound '(this highlight) (lambda (highlighted) 
-      (if highlighted '(128 128 255) '(64 64 255)))))
+    (alias 'on-click 'ma 'on-click)
+    (prop 'color (bound '(ma hover ma pressed) (lambda (hover pressed) 
+      (cond 
+        (pressed '(192 192 255)) 
+        (hover '(128 128 255)) 
+        (else '(64 64 255))))))
     
     (mouse-area
       (id 'ma)
-      (alias 'width 'parent 'width)
-      (alias 'height 'parent 'height)
-      (method 'on-mouse-enter (lambda (sx sy dx dy) (set-prop! (parent) 'highlight #t)))
-      (method 'on-mouse-exit (lambda (sx sy dx dy) (set-prop! (parent) 'highlight #f))))))
+      (fill-parent))))
 
 (define splash-screen
   (composite rectangle
-    (prop 'width 800)
-    (prop 'height 480)
     (prop 'color '(16 16 16))
     
     (column
@@ -87,8 +83,8 @@
           #t)))
     
     (define (goal ball player)
-      (set-prop! ball 'x 400)
-      (set-prop! ball 'y 240)
+      (set-prop! ball 'x (/ (get-prop 'width) 2))
+      (set-prop! ball 'y (/ (get-prop 'height) 2))
       (let ((score-text (find-element (if (= player 1) 'score-1 'score-2))))
         (set-prop! score-text 'score (+ (get-prop score-text 'score) 1))))
             
@@ -101,32 +97,31 @@
     
     (let ((bat-1 (find-element 'bat-1))
           (bat-2 (find-element 'bat-2))
-          (ball (find-element 'ball)))
+          (ball (find-element 'ball))
+          (width (get-prop 'width))
+          (height (get-prop 'height)))
     
       (set-prop! bat-1 'y (+ (get-prop bat-1 'y) (get-prop bat-1 'vy)))
       (set-prop! bat-2 'y (+ (get-prop bat-2 'y) (get-prop bat-2 'vy)))
       (set-prop! ball 'x (+ (get-prop ball 'x) (get-prop ball 'vx)))
       (set-prop! ball 'y (+ (get-prop ball 'y) (get-prop ball 'vy)))
     
-      (limit-value bat-1 'y 0 (- 480 (get-prop bat-1 'height)))
-      (limit-value bat-2 'y 0 (- 480 (get-prop bat-2 'height)))
+      (limit-value bat-1 'y 0 (- height (get-prop bat-1 'height)))
+      (limit-value bat-2 'y 0 (- height (get-prop bat-2 'height)))
       
-      (if (limit-value ball 'y 0 (- 480 (get-prop ball 'height)))
+      (if (limit-value ball 'y 0 (- height (get-prop ball 'height)))
         (set-prop! ball 'vy (- (get-prop ball 'vy))))
         
       (bat-hit bat-1 ball)
       (bat-hit bat-2 ball)
       
-      (check-goal ball (- (get-prop bat-1 'width)) 800)
-    ))
+      (check-goal ball (- (get-prop bat-1 'width)) width)))
     
   (composite rectangle
     (id 'game)
-    (prop 'width 800)
-    (prop 'height 480)
     (prop 'color '(16 16 16))
-    (prop 'update update)
-    (prop 'on-key input)
+    (method 'update update)
+    (method 'on-key input)
     (prop 'speed 3)
     
     (text
@@ -175,15 +170,19 @@
     ))
 (define game (game-gen))
 
-(define (view name constructor)
-  (constructor
-    (prop 'visible (bound '(parent view) (lambda (view) (equal? view name))))))
+(define (view name constructor . args)
+  (apply constructor
+    (cons (prop 'visible (bound '(parent view) (lambda (view) (equal? view name)))) 
+          args)))
     
 (create-elements!
   (item
     (id 'app)
+    (fill-parent)
     (prop 'view "splash-screen")
-    (view "splash-screen" splash-screen)
-    (view "game" game)))
+    (view "splash-screen" splash-screen
+      (fill-parent))
+    (view "game" game
+      (fill-parent))))
 
 (focus! (find-element 'game))

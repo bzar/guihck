@@ -9,7 +9,8 @@ static const char GUIHCK_ITEM_SCM[] =
     "  (create-element 'item (append default-args args)))";
 static const char GUIHCK_MOUSEAREA_SCM[] =
     "(define (mouse-area . args)"
-    "  (define default-args (list (prop 'x 0) (prop 'y 0) (prop 'width 0) (prop 'height 0)))"
+    "  (define default-args (list (prop 'x 0) (prop 'y 0) (prop 'width 0) (prop 'height 0)"
+    "                             (prop 'hover #f) (prop 'pressed #f)))"
     "  (create-element 'mouse-area (append default-args args)))";
 static const char GUIHCK_ROW_SCM[] =
     "(define (row-gen)"
@@ -226,6 +227,7 @@ bool mouseAreaMouseDown(guihckContext* ctx, guihckElementId id, void* data, int 
   (void) x;
   (void) y;
 
+  guihckElementProperty(ctx, id, "pressed", SCM_BOOL_T);
   SCM handler = guihckElementGetProperty(ctx, id, "on-mouse-down");
   if(scm_to_bool(scm_procedure_p(handler)))
   {
@@ -244,14 +246,33 @@ bool mouseAreaMouseUp(guihckContext* ctx, guihckElementId id, void* data, int bu
   (void) x;
   (void) y;
 
-  SCM handler = guihckElementGetProperty(ctx, id, "on-mouse-up");
-  if(scm_to_bool(scm_procedure_p(handler)))
+  SCM pressed = guihckElementGetProperty(ctx, id, "pressed");
+  bool clicked = scm_to_bool(pressed);
+  guihckElementProperty(ctx, id, "pressed", SCM_BOOL_F);
+
   {
-   guihckStackPushElement(ctx, id);
-   SCM expression = scm_list_4(handler, scm_from_int8(button), scm_from_double(x), scm_from_double(y));
-   guihckContextExecuteExpression(ctx, expression);
-   guihckStackPopElement(ctx);
+    SCM handler = guihckElementGetProperty(ctx, id, "on-mouse-up");
+    if(scm_to_bool(scm_procedure_p(handler)))
+    {
+      guihckStackPushElement(ctx, id);
+      SCM expression = scm_list_4(handler, scm_from_int8(button), scm_from_double(x), scm_from_double(y));
+      guihckContextExecuteExpression(ctx, expression);
+      guihckStackPopElement(ctx);
+    }
   }
+
+  if(clicked)
+  {
+    SCM handler = guihckElementGetProperty(ctx, id, "on-click");
+    if(scm_to_bool(scm_procedure_p(handler)))
+    {
+      guihckStackPushElement(ctx, id);
+      SCM expression = scm_list_4(handler, scm_from_int8(button), scm_from_double(x), scm_from_double(y));
+      guihckContextExecuteExpression(ctx, expression);
+      guihckStackPopElement(ctx);
+    }
+  }
+
   return false;
 }
 
@@ -281,6 +302,7 @@ bool mouseAreaMouseEnter(guihckContext* ctx, guihckElementId id, void* data, flo
   (void) dx;
   (void) dy;
 
+  guihckElementProperty(ctx, id, "hover", SCM_BOOL_T);
   SCM handler = guihckElementGetProperty(ctx, id, "on-mouse-enter");
   if(scm_to_bool(scm_procedure_p(handler)))
   {
@@ -299,6 +321,8 @@ bool mouseAreaMouseExit(guihckContext* ctx, guihckElementId id, void* data, floa
   (void) dx;
   (void) dy;
 
+  guihckElementProperty(ctx, id, "hover", SCM_BOOL_F);
+  guihckElementProperty(ctx, id, "pressed", SCM_BOOL_F);
   SCM handler = guihckElementGetProperty(ctx, id, "on-mouse-exit");
   if(scm_to_bool(scm_procedure_p(handler)))
   {

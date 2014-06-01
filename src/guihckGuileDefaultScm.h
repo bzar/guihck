@@ -229,5 +229,10 @@ static const char GUIHCK_GUILE_DEFAULT_SCM[] =
     "        ((eq? a 'center)"
     "         (arg-list (list (align 'vertical-center margin) (align 'horizontal-center margin))))"
     "        (else (arg-list (list)))))))"
+
+    "(define (fill-parent)"
+    "  (arg-list (list"
+    "    (prop 'width (bound '(parent width)))"
+    "    (prop 'height (bound '(parent height))))))"
     ;
 #endif // GUIHCKGUILEDEFAULTSCM_H
