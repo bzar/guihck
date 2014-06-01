@@ -59,6 +59,8 @@ int main(int argc, char** argv)
   guihckInit();
 
   guihckContext* ctx = guihckContextNew();
+  guihckElementProperty(ctx, guihckContextGetRootElement(ctx), "width", scm_from_int32(WIDTH));
+  guihckElementProperty(ctx, guihckContextGetRootElement(ctx), "height", scm_from_int32(HEIGHT));
   guihckRegisterFunction("quit", 0, 0, 0, quit);
   guihckElementsAddAllTypes(ctx);
   guihckGlhckAddAllTypes(ctx);
@@ -84,6 +86,12 @@ int main(int argc, char** argv)
         case GLFWHCK_EVENT_WINDOW_CLOSE:
         {
           running = false;
+          break;
+        }
+        case GLFWHCK_EVENT_WINDOW_RESIZE:
+        {
+          guihckElementProperty(ctx, guihckContextGetRootElement(ctx), "width", scm_from_int32(event->windowResize.width));
+          guihckElementProperty(ctx, guihckContextGetRootElement(ctx), "height", scm_from_int32(event->windowResize.height));
           break;
         }
         case GLFWHCK_EVENT_MOUSE_BUTTON:
