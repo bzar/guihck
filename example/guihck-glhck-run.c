@@ -20,7 +20,7 @@ SCM quit()
 
 int main(int argc, char** argv)
 {
-  if(argc != 2)
+  if(argc < 2)
   {
     printf("Usage: guihck-glhck-run <scm file>\n");
     return EXIT_FAILURE;
@@ -92,6 +92,7 @@ int main(int argc, char** argv)
         {
           guihckElementProperty(ctx, guihckContextGetRootElement(ctx), "width", scm_from_int32(event->windowResize.width));
           guihckElementProperty(ctx, guihckContextGetRootElement(ctx), "height", scm_from_int32(event->windowResize.height));
+          glhckRenderResize(event->windowResize.width, event->windowResize.height);
           break;
         }
         case GLFWHCK_EVENT_MOUSE_BUTTON:
