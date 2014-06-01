@@ -46,7 +46,6 @@
 
 (create-elements!
   (column (prop 'spacing 64)
-    (prop 'x (bound '(this width) (lambda (w) (/ (- 800 w) 2))))
-    (prop 'y (bound '(this height) (lambda (h) (/ (- 480 h) 2))))
+    (align 'center)
     (kitt-7)
     (kitt-9)))

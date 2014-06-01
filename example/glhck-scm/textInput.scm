@@ -22,8 +22,7 @@
 
 (create-elements!
   (column
-    (prop 'x 100)
-    (prop 'y 30)
+    (align 'center)
     (prop 'spacing 32)
     (text-input-box (id 'input-1))
     (text-input-box (id 'input-2)

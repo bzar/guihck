@@ -21,8 +21,7 @@
     (prop 'color '(16 16 16))
     
     (column
-      (prop 'x (bound '(this width parent width) (lambda (w pw) (/ (- pw w) 2))))
-      (prop 'y (bound '(this height parent height) (lambda (h ph) (/ (- ph h) 2))))
+      (align 'center)
       (prop 'spacing 16)
     
       (text
@@ -132,16 +131,14 @@
     
     (text
       (id 'score-1)
-      (prop 'x 10)
-      (prop 'y 10)
+      (align 'top-left 10)
       (prop 'score 0)
       (prop 'size 40)
       (prop 'text (bound '(this score) object->string)))
       
     (text
       (id 'score-2)
-      (prop 'x (bound '(this width) (lambda (w) (- 790 w))))
-      (prop 'y 10)
+      (align 'top-right 10)
       (prop 'score 0)
       (prop 'size 40)
       (prop 'text (bound '(this score) object->string)))
@@ -150,8 +147,7 @@
       (id 'ball)
       (prop 'width 20)
       (prop 'height 20)
-      (prop 'x (- (/ 800 2) (/ 20 2)))
-      (prop 'y (- (/ 480 2) (/ 20 2)))
+      (align 'center)
       (prop 'vx 3)
       (prop 'vy 3))
       
@@ -159,16 +155,16 @@
       (id 'bat-1)
       (prop 'width 20)
       (prop 'height 100)
-      (prop 'x 20)
-      (prop 'y (- (/ 480 2) (/ 100 2)))
+      (align 'left 20)
+      (align 'vertical-center)
       (prop 'vy 0))
       
     (rectangle
       (id 'bat-2)
       (prop 'width 20)
-      (prop 'height 100)
-      (prop 'x (- 800 (* 2 20)))
-      (prop 'y (- (/ 480 2) (/ 100 2)))
+      (align 'height 100)
+      (align 'right 20)
+      (align 'vertical-center)
       (prop 'vy 0))
       
     (timer

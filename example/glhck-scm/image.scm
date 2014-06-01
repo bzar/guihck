@@ -6,8 +6,8 @@
       (image
         (id 'img-1)
         (prop 'source "img/infantry_1.png")
-        (prop 'width (bound '(this source-width) identity))
-        (prop 'height (bound '(this source-height) identity)))
+        (prop 'width (bound '(this source-width)))
+        (prop 'height (bound '(this source-height))))
       (image 
         (id 'img-2)
         (prop 'source "img/infantry_1.png")

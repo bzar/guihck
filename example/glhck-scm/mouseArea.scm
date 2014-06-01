@@ -1,14 +1,13 @@
 (create-elements!
   (rectangle 
     (id 'button) 
-    (prop 'x 300)
-    (prop 'y 100)
+    (align 'center)
     (prop 'width 200)
     (prop 'height 200)
     
     (mouse-area 
-      (prop 'width (bound '(parent width) identity))
-      (prop 'height (bound '(parent height) identity))
+      (prop 'width (bound '(parent width)))
+      (prop 'height (bound '(parent height)))
       (prop 'color '(0 0 255))
       (method 'on-mouse-down (lambda (b x y) 
         (set-prop! (find-element 'button) 'color '(0 0 255))))
@@ -23,8 +22,7 @@
           
       (rectangle 
         (id 'inner)
-        (prop 'x 75)
-        (prop 'y 75)
+        (align 'center)
         (prop 'width 50)
         (prop 'height 50)
         (prop 'color '(0 0 0))))))

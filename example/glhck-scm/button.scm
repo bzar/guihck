@@ -19,8 +19,7 @@
 
 (create-elements!
   (row
-    (prop 'x 100)
-    (prop 'y 100)
+    (align 'top-left 100)
     (prop 'spacing 16)
     (column
       (prop 'spacing 8)
