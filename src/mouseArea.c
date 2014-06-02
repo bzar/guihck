@@ -1,46 +1,53 @@
 #include "internal.h"
 
 static bool pointInRect(float x, float y, const _guihckRect* r);
+static chckIterPool* queryMouseAreasContainingPoint(guihckContext* ctx, float x, float y);
+static chckIterPool* queryMouseAreasIntersectingLine(guihckContext* ctx, float sx, float sy, float dx, float dy);
 
 void guihckContextMouseDown(guihckContext* ctx, float x, float y, int button)
 {
-  /* Should be replaced by querying a quad tree*/
-  guihckMouseAreaId mouseAreaIter = 0;
-  _guihckMouseArea* mouseArea  = NULL;
-  while((mouseArea = chckPoolIter(ctx->mouseAreas, &mouseAreaIter)))
+  chckPoolIndex iter = 0;
+  guihckMouseAreaId* mouseAreaId = NULL;
+  chckIterPool* mouseAreas = queryMouseAreasContainingPoint(ctx, x, y);
+  bool handled = false;
+  while(!handled && (mouseAreaId = chckIterPoolIter(mouseAreas, &iter)))
   {
-    if(mouseArea->functionMap.mouseDown
-       && pointInRect(x, y, &mouseArea->rect))
+    _guihckMouseArea* mouseArea = chckPoolGet(ctx->mouseAreas, *mouseAreaId);
+    if(mouseArea->functionMap.mouseDown)
     {
-      mouseArea->functionMap.mouseDown(ctx, mouseArea->elementId, guihckElementGetData(ctx, mouseArea->elementId), button, x, y);
+      handled = mouseArea->functionMap.mouseDown(ctx, mouseArea->elementId, guihckElementGetData(ctx, mouseArea->elementId), button, x, y);
     }
   }
+  free(mouseAreas);
 }
 
 
 void guihckContextMouseUp(guihckContext* ctx, float x, float y, int button)
 {
-  /* Should be replaced by querying a quad tree*/
-  guihckMouseAreaId mouseAreaIter = 0;
-  _guihckMouseArea* mouseArea  = NULL;
-  while((mouseArea = chckPoolIter(ctx->mouseAreas, &mouseAreaIter)))
+  chckPoolIndex iter = 0;
+  guihckMouseAreaId* mouseAreaId = NULL;
+  chckIterPool* mouseAreas = queryMouseAreasContainingPoint(ctx, x, y);
+  bool handled = false;
+  while(!handled && (mouseAreaId = chckIterPoolIter(mouseAreas, &iter)))
   {
-    if(mouseArea->functionMap.mouseUp
-       && pointInRect(x, y, &mouseArea->rect))
+    _guihckMouseArea* mouseArea = chckPoolGet(ctx->mouseAreas, *mouseAreaId);
+    if(mouseArea->functionMap.mouseUp)
     {
-      mouseArea->functionMap.mouseUp(ctx, mouseArea->elementId, guihckElementGetData(ctx, mouseArea->elementId), button, x, y);
+      handled = mouseArea->functionMap.mouseUp(ctx, mouseArea->elementId, guihckElementGetData(ctx, mouseArea->elementId), button, x, y);
     }
   }
+  free(mouseAreas);
 }
-
 
 void guihckContextMouseMove(guihckContext* ctx, float sx, float sy, float dx, float dy)
 {
-  /* Should be replaced by querying the segment from a quad tree*/
-  guihckMouseAreaId mouseAreaIter = 0;
-  _guihckMouseArea* mouseArea  = NULL;
-  while((mouseArea = chckPoolIter(ctx->mouseAreas, &mouseAreaIter)))
+  chckPoolIndex iter = 0;
+  guihckMouseAreaId* mouseAreaId = NULL;
+  chckIterPool* mouseAreas = queryMouseAreasIntersectingLine(ctx, sx, sy, dx, dy);
+  bool handled = false;
+  while(!handled && (mouseAreaId = chckIterPoolIter(mouseAreas, &iter)))
   {
+    _guihckMouseArea* mouseArea = chckPoolGet(ctx->mouseAreas, *mouseAreaId);
     if(!mouseArea->functionMap.mouseMove && !mouseArea->functionMap.mouseEnter && !mouseArea->functionMap.mouseExit)
       continue;
 
@@ -50,19 +57,20 @@ void guihckContextMouseMove(guihckContext* ctx, float sx, float sy, float dx, fl
     if(s && d)
     {
       if(mouseArea->functionMap.mouseMove)
-        mouseArea->functionMap.mouseMove(ctx, mouseArea->elementId, guihckElementGetData(ctx, mouseArea->elementId), sx, sy, dx, dy);
+        handled = mouseArea->functionMap.mouseMove(ctx, mouseArea->elementId, guihckElementGetData(ctx, mouseArea->elementId), sx, sy, dx, dy);
     }
     else if(s)
     {
       if(mouseArea->functionMap.mouseExit)
-        mouseArea->functionMap.mouseExit(ctx, mouseArea->elementId, guihckElementGetData(ctx, mouseArea->elementId), sx, sy, dx, dy);
+        handled = mouseArea->functionMap.mouseExit(ctx, mouseArea->elementId, guihckElementGetData(ctx, mouseArea->elementId), sx, sy, dx, dy);
     }
     else if(d)
     {
       if(mouseArea->functionMap.mouseEnter)
-        mouseArea->functionMap.mouseEnter(ctx, mouseArea->elementId, guihckElementGetData(ctx, mouseArea->elementId), sx, sy, dx, dy);
+        handled = mouseArea->functionMap.mouseEnter(ctx, mouseArea->elementId, guihckElementGetData(ctx, mouseArea->elementId), sx, sy, dx, dy);
     }
   }
+  free(mouseAreas);
 }
 
 
@@ -115,4 +123,41 @@ void guihckMouseAreaGetRect(guihckContext* ctx, guihckMouseAreaId mouseAreaId, f
 bool pointInRect(float x, float y, const _guihckRect* r)
 {
   return x >= r->x && x <= r->x + r->w && y >= r->y && y <= r->y + r->h;
+}
+
+chckIterPool* queryMouseAreasContainingPoint(guihckContext* ctx, float x, float y)
+{
+  chckIterPool* result = chckIterPoolNew(4, 4, sizeof(guihckMouseAreaId));
+  guihckMouseAreaId mouseAreaIter = 0;
+  _guihckMouseArea* mouseArea  = NULL;
+  while((mouseArea = chckPoolIter(ctx->mouseAreas, &mouseAreaIter)))
+  {
+    /* Should be replaced by querying a quad tree*/
+    if(pointInRect(x, y, &mouseArea->rect))
+    {
+      guihckMouseAreaId id = mouseAreaIter - 1;
+      chckIterPoolAdd(result, &id, NULL);
+    }
+  }
+
+  return result;
+}
+
+chckIterPool* queryMouseAreasIntersectingLine(guihckContext* ctx, float sx, float sy, float dx, float dy)
+{
+  chckIterPool* result = chckIterPoolNew(4, 4, sizeof(guihckMouseAreaId));
+  guihckMouseAreaId mouseAreaIter = 0;
+  _guihckMouseArea* mouseArea  = NULL;
+  while((mouseArea = chckPoolIter(ctx->mouseAreas, &mouseAreaIter)))
+  {
+    /* Should be replaced by querying a quad tree*/
+    if(pointInRect(sx, sy, &mouseArea->rect)
+       || pointInRect(dx, dy, &mouseArea->rect))
+    {
+      guihckMouseAreaId id = mouseAreaIter - 1;
+      chckIterPoolAdd(result, &id, NULL);
+    }
+  }
+
+  return result;
 }
