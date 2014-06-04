@@ -728,7 +728,7 @@ void _guihckOrderListenerCallback(guihckContext* ctx, guihckElementId listenerId
   {
     SCM orderScm = guihckElementGetProperty(ctx, children[i], "order");
     int order = scm_is_integer(orderScm) ? scm_to_int32(orderScm) : 0;
-    if(order < myOrder)
+    if(order <= myOrder)
     {
       children[i + 1] = children[i];
       children[i] = listenedId;
