@@ -204,7 +204,7 @@ void renderRectangle(guihckContext* ctx, guihckElementId id, void* data)
   (void) ctx;
   (void) id;
 
-  glhckObjectDraw(*((glhckObject**) data));
+  glhckObjectRender(*((glhckObject**) data));
 }
 
 
@@ -347,7 +347,7 @@ void renderText(guihckContext* ctx, guihckElementId id, void* data)
   (void) id;
 
   _guihckGlhckText* d = data;
-  glhckObjectDraw(d->object);
+  glhckObjectRender(d->object);
 }
 
 void guihckGlhckAddImageType(guihckContext* ctx)
@@ -475,7 +475,7 @@ void renderImage(guihckContext* ctx, guihckElementId id, void* data)
   (void) id;
 
   _guihckGlhckImage* d = data;
-  glhckObjectDraw(d->object);
+  glhckObjectRender(d->object);
 }
 
 void guihckGlhckAddTextInputType(guihckContext* ctx)

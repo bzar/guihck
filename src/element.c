@@ -14,6 +14,7 @@ static void _guihckPropertyCreate(guihckContext* ctx, guihckElementId elementId,
 static void _guihckPropertyListenerFreeCallback(guihckContext* ctx, guihckElementId listenerId, guihckElementId listenedId, const char* property, SCM value, void* data);
 static void _guihckPropertyAliasFreeCallback(guihckContext* ctx, guihckElementId listenerId, guihckElementId listenedId, const char* property, SCM value, void* data);
 static void _guihckPropertyBindListenerCallback(guihckContext* ctx, guihckElementId listenerId, guihckElementId listenedId, const char* property, SCM value, void* data);
+static void _guihckOrderListenerCallback(guihckContext* ctx, guihckElementId listenerId, guihckElementId listenedId, const char* property, SCM value, void* data);
 
 guihckElementId guihckElementNew(guihckContext* ctx, guihckElementTypeId typeId, guihckElementId parentId)
 {
@@ -44,6 +45,7 @@ guihckElementId guihckElementNew(guihckContext* ctx, guihckElementTypeId typeId,
   if(parent)
   {
     _guihckElementUpdateChildrenProperty(ctx, parentId);
+    guihckElementAddListener(ctx, parentId, id, "order", _guihckOrderListenerCallback, NULL, NULL);
   }
 
   guihckElementProperty(ctx, id, "focus", SCM_BOOL_F);
@@ -687,3 +689,55 @@ void _guihckPropertyAliasFreeCallback(guihckContext* ctx, guihckElementId listen
   }
 }
 
+void _guihckOrderListenerCallback(guihckContext* ctx, guihckElementId listenerId, guihckElementId listenedId, const char* property, SCM value, void* data)
+{
+  (void) property;
+  (void) data;
+
+  int myOrder = scm_is_integer(value) ? scm_to_int32(value) : 0;
+
+  guihckElement* parent = chckPoolGet(ctx->elements, listenerId);
+
+  size_t nn;
+  guihckElementId* children = chckIterPoolToCArray(parent->children, &nn);
+
+  int i;
+  int n = nn;
+
+  /* Find this child */
+  for(i = 0; i < n && children[i] != listenedId; ++i);
+
+  /* Move forward until order is same or less */
+  for(i = i + 1; i < n; ++i)
+  {
+    SCM orderScm = guihckElementGetProperty(ctx, children[i], "order");
+    int order = scm_is_integer(orderScm) ? scm_to_int32(orderScm) : 0;
+    if(order > myOrder)
+    {
+      children[i - 1] = children[i];
+      children[i] = listenedId;
+    }
+    else
+    {
+      break;
+    }
+  }
+
+  /* Move backward until order is same or greater */
+  for(i = i - 2; i >= 0; --i)
+  {
+    SCM orderScm = guihckElementGetProperty(ctx, children[i], "order");
+    int order = scm_is_integer(orderScm) ? scm_to_int32(orderScm) : 0;
+    if(order < myOrder)
+    {
+      children[i + 1] = children[i];
+      children[i] = listenedId;
+    }
+    else
+    {
+      break;
+    }
+  }
+
+  _guihckElementUpdateChildrenProperty(ctx, listenerId);
+}

@@ -159,10 +159,10 @@ void guihckContextRender(guihckContext* ctx)
     }
 
     chckPoolIndex iter = 0;
-    guihckElementId* childId;
-    while((childId = chckIterPoolIter(element->children, &iter)))
+    guihckElementId* child;
+    while((child = chckIterPoolIter(element->children, &iter)))
     {
-      chckRingPoolPushEnd(stack, childId);
+      chckRingPoolPushEnd(stack, child);
     }
   }
   chckRingPoolFree(stack);
