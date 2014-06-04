@@ -51,6 +51,7 @@ guihckElementId guihckElementNew(guihckContext* ctx, guihckElementTypeId typeId,
 
   guihckElementProperty(ctx, id, "focus", SCM_BOOL_F);
   guihckElementAddListener(ctx, id, id, "visible", _guihckVisibleListenerCallback, NULL, NULL);
+  ctx->renderOrderChanged = true;
   return id;
 }
 
@@ -135,6 +136,8 @@ void guihckElementRemove(guihckContext* ctx, guihckElementId elementId)
   /* If was focused, focus to root */
   if(ctx->focused == elementId)
     ctx->focused = ctx->rootElementId;
+
+  ctx->renderOrderChanged = true;
 }
 
 
