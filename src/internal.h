@@ -23,6 +23,8 @@ typedef struct _guihckContext
   chckPool* elements;
   chckPool* elementTypes;
   chckHashTable* elementTypesByName;
+  chckIterPool* renderOrder;
+  bool renderOrderChanged;
   chckPool* mouseAreas;  /* should also have a quadtree for references */
   chckIterPool* stack;
   guihckElementId rootElementId;

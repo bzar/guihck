@@ -14,6 +14,7 @@ static void _guihckPropertyCreate(guihckContext* ctx, guihckElementId elementId,
 static void _guihckPropertyListenerFreeCallback(guihckContext* ctx, guihckElementId listenerId, guihckElementId listenedId, const char* property, SCM value, void* data);
 static void _guihckPropertyAliasFreeCallback(guihckContext* ctx, guihckElementId listenerId, guihckElementId listenedId, const char* property, SCM value, void* data);
 static void _guihckPropertyBindListenerCallback(guihckContext* ctx, guihckElementId listenerId, guihckElementId listenedId, const char* property, SCM value, void* data);
+static void _guihckVisibleListenerCallback(guihckContext* ctx, guihckElementId listenerId, guihckElementId listenedId, const char* property, SCM value, void* data);
 static void _guihckOrderListenerCallback(guihckContext* ctx, guihckElementId listenerId, guihckElementId listenedId, const char* property, SCM value, void* data);
 
 guihckElementId guihckElementNew(guihckContext* ctx, guihckElementTypeId typeId, guihckElementId parentId)
@@ -49,6 +50,7 @@ guihckElementId guihckElementNew(guihckContext* ctx, guihckElementTypeId typeId,
   }
 
   guihckElementProperty(ctx, id, "focus", SCM_BOOL_F);
+  guihckElementAddListener(ctx, id, id, "visible", _guihckVisibleListenerCallback, NULL, NULL);
   return id;
 }
 
@@ -689,6 +691,17 @@ void _guihckPropertyAliasFreeCallback(guihckContext* ctx, guihckElementId listen
   }
 }
 
+void _guihckVisibleListenerCallback(guihckContext* ctx, guihckElementId listenerId, guihckElementId listenedId, const char* property, SCM value, void* data)
+{
+  (void) listenerId;
+  (void) listenedId;
+  (void) property;
+  (void) value;
+  (void) data;
+
+  ctx->renderOrderChanged = true;
+}
+
 void _guihckOrderListenerCallback(guihckContext* ctx, guihckElementId listenerId, guihckElementId listenedId, const char* property, SCM value, void* data)
 {
   (void) property;
@@ -740,4 +753,5 @@ void _guihckOrderListenerCallback(guihckContext* ctx, guihckElementId listenerId
   }
 
   _guihckElementUpdateChildrenProperty(ctx, listenerId);
+  ctx->renderOrderChanged = true;
 }

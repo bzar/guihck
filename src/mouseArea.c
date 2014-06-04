@@ -3,6 +3,7 @@
 static bool pointInRect(float x, float y, const _guihckRect* r);
 static chckIterPool* queryMouseAreasContainingPoint(guihckContext* ctx, float x, float y);
 static chckIterPool* queryMouseAreasIntersectingLine(guihckContext* ctx, float sx, float sy, float dx, float dy);
+static chckIterPool* sortMouseAreasByElementOrder(guihckContext* ctx, chckIterPool* mouseAreas);
 
 void guihckContextMouseDown(guihckContext* ctx, float x, float y, int button)
 {
@@ -140,7 +141,7 @@ chckIterPool* queryMouseAreasContainingPoint(guihckContext* ctx, float x, float 
     }
   }
 
-  return result;
+  return sortMouseAreasByElementOrder(ctx, result);
 }
 
 chckIterPool* queryMouseAreasIntersectingLine(guihckContext* ctx, float sx, float sy, float dx, float dy)
@@ -159,5 +160,44 @@ chckIterPool* queryMouseAreasIntersectingLine(guihckContext* ctx, float sx, floa
     }
   }
 
-  return result;
+  return sortMouseAreasByElementOrder(ctx, result);
+}
+
+chckIterPool* sortMouseAreasByElementOrder(guihckContext* ctx, chckIterPool* mouseAreas)
+{
+  size_t n;
+  guihckMouseAreaId* m = chckIterPoolToCArray(mouseAreas, &n);
+
+  if(n < 2)
+    return mouseAreas;
+
+  int left = n;
+
+  int i;
+  for(i = chckIterPoolCount(ctx->renderOrder) - 1; i >= 0 && left > 0; --i)
+  {
+    guihckElementId* id = chckIterPoolGet(ctx->renderOrder, i);
+    size_t j;
+    for(j = n - left; j < n; ++j)
+    {
+      _guihckMouseArea* ma = chckPoolGet(ctx->mouseAreas, m[j]);
+      if(ma->elementId == *id)
+      {
+        if(n - left != j)
+        {
+          guihckMouseAreaId temp = m[n - left];
+          m[n - left] = m[j];
+          m[j] = temp;
+        }
+        left -= 1;
+      }
+    }
+  }
+
+  for(i = 0; i < left; ++i)
+  {
+    chckIterPoolRemove(mouseAreas, n - i);
+  }
+
+  return mouseAreas;
 }

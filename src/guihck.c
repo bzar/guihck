@@ -26,6 +26,9 @@ guihckContext* guihckContextNew()
   ctx->elements = chckPoolNew(64, 64, sizeof(guihckElement));
   ctx->elementTypes = chckPoolNew(16, 16, sizeof(_guihckElementType));
   ctx->elementTypesByName = chckHashTableNew(32);
+  ctx->renderOrder = chckIterPoolNew(64, 64, sizeof(guihckElementId));
+  ctx->renderOrderChanged = false;
+
   ctx->mouseAreas = chckPoolNew(16, 16, sizeof(_guihckMouseArea));
   ctx->stack = chckIterPoolNew(16, 16, sizeof(guihckElementId));
   ctx->propertyListeners = chckPoolNew(16, 16, sizeof(_guihckPropertyListener));
@@ -141,31 +144,46 @@ void guihckContextUpdate(guihckContext* ctx)
 
 void guihckContextRender(guihckContext* ctx)
 {
-  chckRingPool* stack = chckRingPoolNew(64, 64, sizeof(guihckElementId));
-  chckRingPoolPushEnd(stack, &ctx->rootElementId);
-
-  guihckElementId* elementId;
-  while ((elementId = chckRingPoolPopLast(stack)))
+  if(ctx->renderOrderChanged)
   {
-    if(!guihckElementGetVisible(ctx, *elementId))
-      continue;
+    ctx->renderOrderChanged = false;
+    chckIterPoolFree(ctx->renderOrder);
+    ctx->renderOrder = chckIterPoolNew(64, chckPoolCount(ctx->elements), sizeof(guihckElementId));
 
+    chckRingPool* stack = chckRingPoolNew(64, 64, sizeof(guihckElementId));
+    chckRingPoolPushEnd(stack, &ctx->rootElementId);
+
+    guihckElementId* elementId;
+    while ((elementId = chckRingPoolPopLast(stack)))
+    {
+      if(!guihckElementGetVisible(ctx, *elementId))
+        continue;
+
+      chckIterPoolAdd(ctx->renderOrder, elementId, NULL);
+
+      _guihckElement* element = chckPoolGet(ctx->elements, *elementId);
+      chckPoolIndex iter = 0;
+      guihckElementId* child;
+      while((child = chckIterPoolIter(element->children, &iter)))
+      {
+        chckRingPoolPushEnd(stack, child);
+      }
+    }
+    chckRingPoolFree(stack);
+  }
+
+  chckPoolIndex iter = 0;
+  guihckElementId* elementId;
+  while((elementId = chckIterPoolIter(ctx->renderOrder, &iter)))
+  {
     _guihckElement* element = chckPoolGet(ctx->elements, *elementId);
-
     _guihckElementType* type = chckPoolGet(ctx->elementTypes, element->type);
     if(type->functionMap.render)
     {
       type->functionMap.render(ctx, *elementId, element->data);
     }
-
-    chckPoolIndex iter = 0;
-    guihckElementId* child;
-    while((child = chckIterPoolIter(element->children, &iter)))
-    {
-      chckRingPoolPushEnd(stack, child);
-    }
   }
-  chckRingPoolFree(stack);
+
 }
 
 guihckElementId guihckContextGetRootElement(guihckContext* ctx)
