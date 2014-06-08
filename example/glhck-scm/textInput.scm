@@ -7,6 +7,7 @@
         (if focus '(255 255 255) '(200 200 200)))))
     (alias 'text-color 'input 'color)
     (alias 'text 'input 'text)
+    (alias 'font 'input 'font)
     (prop 'init 
       (lambda () 
         (bind 'focus 
@@ -27,7 +28,8 @@
     (text-input-box (id 'input-1))
     (text-input-box (id 'input-2)
       (prop 'text "Foo Bar Baz!"))
-    (text-input-box (id 'input-3))
+    (text-input-box (id 'input-3)
+      (prop 'font "fonts/DejaVuSans.ttf"))
     (text-input-box (id 'input-4))))
   
 (focus! (find-element 'input-1))

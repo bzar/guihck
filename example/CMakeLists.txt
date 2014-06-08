@@ -5,6 +5,8 @@ add_subdirectory(lib)
 
 include_directories(
   ../include
+  ../lib/chck/pool
+  ../lib/chck/lut
   ${guile-2.0_INCLUDE_DIRS}
   ${kazmath_SOURCE_DIR}/src
   ${glhck_SOURCE_DIR}/include
@@ -34,4 +36,5 @@ target_link_libraries(guihck-functions guihck glhck glfw ${GLFW_LIBRARIES} glfwh
 FILE(COPY scm DESTINATION .)
 FILE(COPY glhck-scm DESTINATION .)
 FILE(COPY img DESTINATION .)
+FILE(COPY fonts DESTINATION .)
 

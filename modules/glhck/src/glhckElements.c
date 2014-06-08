@@ -1,6 +1,7 @@
 #include "glhckElements.h"
 #include "guihckElementUtils.h"
 #include "glhck/glhck.h"
+#include "lut.h"
 #include <stdio.h>
 
 #if defined(_MSC_VER)
@@ -32,6 +33,7 @@ static const char GUIHCK_GLHCK_TEXT_SCM[] =
     "    (prop 'y 0)"
     "    (prop 'size 12)"
     "    (prop 'text \"\")"
+    "    (prop 'font \"\")"
     "    (prop 'color '(255 255 255))))"
     "  (create-element 'text (append default-args args)))"
     ;
@@ -70,6 +72,7 @@ static const char GUIHCK_GLHCK_TEXT_INPUT_SCM[] =
     "    (prop 'on-char append-char!)"
     "    (prop 'on-key handle-key!)"
     "    (alias 'text 'text-content 'text)"
+    "    (alias 'font 'text-content 'font)"
     "    (alias 'color 'text-content 'color)"
     "    (alias 'size 'text-content 'size)"
     "    (text"
@@ -102,22 +105,25 @@ static void renderRectangle(guihckContext* ctx, guihckElementId id, void* data);
 typedef struct _guihckGlhckTextContext
 {
   glhckText* text;
+  chckHashTable* fonts;
   int textRefs;
 } _guihckGlhckTextContext;
 
-static _GUIHCK_GLHCK_TLS _guihckGlhckTextContext textThreadLocalContext = {NULL, 0};
+static _GUIHCK_GLHCK_TLS _guihckGlhckTextContext textThreadLocalContext = {NULL, NULL, 0};
 
 typedef struct _guihckGlhckText
 {
   unsigned int font;
   glhckObject* object;
   char* content;
+  char* fontPath;
 } _guihckGlhckText;
 
 static void initText(guihckContext* ctx, guihckElementId id, void* data);
 static void destroyText(guihckContext* ctx, guihckElementId id, void* data);
 static bool updateText(guihckContext* ctx, guihckElementId id, void* data);
 static void renderText(guihckContext* ctx, guihckElementId id, void* data);
+static unsigned int getFont(const char* fontPath);
 
 typedef struct _guihckGlhckImage
 {
@@ -239,7 +245,8 @@ void initText(guihckContext* ctx, guihckElementId id, void* data)
 {
   if(textThreadLocalContext.textRefs == 0)
   {
-    textThreadLocalContext.text = glhckTextNew(512, 512);
+    textThreadLocalContext.text = glhckTextNew(1024, 1024);
+    textThreadLocalContext.fonts = chckHashTableNew(16);
   }
   textThreadLocalContext.textRefs += 1;
 
@@ -250,10 +257,12 @@ void initText(guihckContext* ctx, guihckElementId id, void* data)
   glhckObjectMaterial(d->object, m);
   glhckMaterialFree(m);
   d->content = NULL;
+  d->fontPath = NULL;
   guihckElementAddParentPositionListeners(ctx, id);
   guihckElementAddUpdateProperty(ctx, id, "absolute-x");
   guihckElementAddUpdateProperty(ctx, id, "absolute-y");
   guihckElementAddUpdateProperty(ctx, id, "text");
+  guihckElementAddUpdateProperty(ctx, id, "font");
   guihckElementAddUpdateProperty(ctx, id, "size");
   guihckElementAddUpdateProperty(ctx, id, "color");
 }
@@ -264,7 +273,6 @@ void destroyText(guihckContext* ctx, guihckElementId id, void* data)
   (void) id;
 
   _guihckGlhckText* d = data;
-  glhckTextFontFree(textThreadLocalContext.text, d->font);
   glhckObjectFree(d->object);
   if(d->content)
     free(d->content);
@@ -272,6 +280,15 @@ void destroyText(guihckContext* ctx, guihckElementId id, void* data)
   textThreadLocalContext.textRefs -= 1;
   if(textThreadLocalContext.textRefs == 0)
   {
+    chckHashTableIterator fontIter = {NULL, 0};
+    unsigned int* font;
+    while((font = chckHashTableIter(textThreadLocalContext.fonts, &fontIter)))
+    {
+      glhckTextFontFree(textThreadLocalContext.text, *font);
+    }
+    chckHashTableFree(textThreadLocalContext.fonts);
+    textThreadLocalContext.fonts = NULL;
+
     glhckTextFree(textThreadLocalContext.text);
     textThreadLocalContext.text = NULL;
   }
@@ -282,9 +299,25 @@ bool updateText(guihckContext* ctx, guihckElementId id, void* data)
   _guihckGlhckText* d = data;
 
   SCM textContent = guihckElementGetProperty(ctx, id, "text");
+  SCM fontPath = guihckElementGetProperty(ctx, id, "font");
   SCM textSize = guihckElementGetProperty(ctx, id, "size");
   SCM c = guihckElementGetProperty(ctx, id, "color");
 
+  if(scm_is_string(fontPath))
+  {
+    char* fontPathStr = scm_to_utf8_string(fontPath);
+    if(!d->fontPath || strcmp(fontPathStr, d->fontPath))
+    {
+      d->font = getFont(fontPathStr);
+      if(d->fontPath)
+        free(d->fontPath);
+      d->fontPath = fontPathStr;
+    }
+    else
+    {
+      free(fontPathStr);
+    }
+  }
   if(scm_is_string(textContent))
   {
     char* textContentStr = scm_to_utf8_string(textContent);
@@ -295,14 +328,16 @@ bool updateText(guihckContext* ctx, guihckElementId id, void* data)
         float size = scm_is_real(textSize)  ? scm_to_double(textSize) : 12;
         glhckTexture* texture = glhckTextRTT(textThreadLocalContext.text, d->font, size, textContentStr, glhckTextureDefaultLinearParameters());
         glhckMaterialTexture(glhckObjectGetMaterial(d->object), texture);
-        glhckTextureFree(texture);
+        if(texture)
+          glhckTextureFree(texture);
       }
       else
       {
         glhckMaterialTexture(glhckObjectGetMaterial(d->object), NULL);
       }
 
-      free(d->content);
+      if(d->content)
+        free(d->content);
       d->content = textContentStr;
     }
     else
@@ -361,6 +396,28 @@ void renderText(guihckContext* ctx, guihckElementId id, void* data)
 
   _guihckGlhckText* d = data;
   glhckObjectRender(d->object);
+}
+
+unsigned int getFont(const char* fontPath)
+{
+  unsigned int* result = chckHashTableStrGet(textThreadLocalContext.fonts, fontPath);
+  if(!result)
+  {
+    unsigned int font;
+
+    if(strlen(fontPath) == 0)
+    {
+      font = glhckTextFontNewKakwafont(textThreadLocalContext.text, NULL);
+    }
+    else
+    {
+      font = glhckTextFontNew(textThreadLocalContext.text, fontPath);
+    }
+    chckHashTableStrSet(textThreadLocalContext.fonts, fontPath, &font, sizeof(unsigned int));
+    return font;
+  }
+
+  return *result;
 }
 
 void guihckGlhckAddImageType(guihckContext* ctx)
