@@ -66,8 +66,9 @@ static const char GUIHCK_GUILE_DEFAULT_SCM[] =
     "      (pop-element!)"
     "      result)))"
 
+    "(define (execute f) (f))"
     "(define (create-elements! . elements)"
-    "  (for-each (lambda (e) (e)) elements))"
+    "  (for-each execute (map execute elements)))"
 
     "(define (create-element type nested-args)"
     "  (define (flatten-args as)"
@@ -87,7 +88,7 @@ static const char GUIHCK_GUILE_DEFAULT_SCM[] =
 
     "  (define (eval-children)"
     "    (define child? procedure?)"
-    "    (for-each (lambda (child) (child))"
+    "    (map (lambda (child) (child))"
     "              (filter child? args)))"
 
     "  (define (set-props)"
@@ -116,11 +117,16 @@ static const char GUIHCK_GUILE_DEFAULT_SCM[] =
     "  (lambda ()"
     "    (push-new-element! type)"
     "    (set-id)"
-    "    (eval-children)"
-    "    (set-props)"
-    "    (if (procedure? (get-element-property 'init))"
-    "      ((get-element-property 'init)))"
-    "    (pop-element!)))"
+    "    (let ((element (get-element))"
+    "          (child-props (eval-children)))"
+    "      (pop-element!)"
+    "      (lambda ()"
+    "        (push-element! element)"
+    "        (for-each execute child-props)"
+    "        (set-props)"
+    "        (if (procedure? (get-element-property 'init))"
+    "          ((get-element-property 'init)))"
+    "        (pop-element!)))))"
 
     "(define (arg-list args) (cons 'arg-list args))"
 
