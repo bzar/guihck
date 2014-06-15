@@ -51,6 +51,9 @@ int main(int argc, char** argv)
 
   // Stack operations
   guihckContext* ctx2 = guihckContextNew();
+
+  assert(scm_is_eq(guihckStackGetElementProperty(ctx2, "id"), scm_from_utf8_symbol("root")));
+
   guihckElementTypeAdd(ctx2, "foo", fooMap, 0);
   guihckStackPushNewElement(ctx2, "foo");
 

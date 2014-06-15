@@ -36,7 +36,7 @@ guihckContext* guihckContextNew()
   guihckElementTypeFunctionMap rootElementFunctionMap = { NULL, NULL, NULL, NULL, NULL, NULL };
   guihckElementTypeId rootTypeId = guihckElementTypeAdd(ctx, "root", rootElementFunctionMap, 0);
   ctx->rootElementId = guihckElementNew(ctx, rootTypeId, GUIHCK_NO_PARENT);
-  guihckElementProperty(ctx, ctx->rootElementId, "id", scm_from_utf8_string("root"));
+  guihckElementProperty(ctx, ctx->rootElementId, "id", scm_from_utf8_symbol("root"));
   guihckStackPushElement(ctx, ctx->rootElementId);
   ctx->focused = ctx->rootElementId;
 
