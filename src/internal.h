@@ -33,6 +33,7 @@ typedef struct _guihckContext
   chckHashTable* keyCodesByName;
   chckHashTable* keyNamesByCode;
   double time;
+  void* userData;
 } _guihckContext;
 
 typedef struct _guihckElementType

@@ -46,6 +46,7 @@ guihckContext* guihckContextNew()
   _guihckContextAddDefaultKeybindings(ctx);
 
   ctx->time = 0;
+  ctx->userData = NULL;
 
   return ctx;
 }
@@ -54,6 +55,18 @@ guihckContext* guihckContextGetCurrent()
 {
   return guihckGuileGetCurrentThreadContext();
 }
+
+void guihckContextUserData(guihckContext* ctx, void* data)
+{
+  ctx->userData = data;
+}
+
+
+void* guihckContextGetUserData(guihckContext* ctx)
+{
+  return ctx->userData;
+}
+
 
 void guihckContextFree(guihckContext* ctx)
 {
@@ -403,4 +416,3 @@ void _guihckContextAddDefaultKeybindings(guihckContext* ctx)
     guihckContextAddKeyBinding(ctx, b->code, b->name);
   }
 }
-
