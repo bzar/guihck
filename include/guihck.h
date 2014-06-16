@@ -3,7 +3,7 @@
 
 #include <libguile.h>
 #include <stdbool.h>
-#include <guihckKeys.h>
+#include "guihckKeys.h"
 
 #ifdef __cplusplus
 extern "C" {
