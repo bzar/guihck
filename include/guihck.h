@@ -55,6 +55,8 @@ void guihckRegisterFunction(const char* name, int req, int opt, int rst, scm_t_s
 // Context
 
 guihckContext* guihckContextNew();
+guihckContext* guihckContextGetCurrent();
+
 void guihckContextFree(guihckContext* ctx);
 void guihckContextUpdate(guihckContext* ctx);
 void guihckContextRender(guihckContext* ctx);

@@ -50,6 +50,10 @@ guihckContext* guihckContextNew()
   return ctx;
 }
 
+guihckContext* guihckContextGetCurrent()
+{
+  return guihckGuileGetCurrentThreadContext();
+}
 
 void guihckContextFree(guihckContext* ctx)
 {
@@ -399,3 +403,4 @@ void _guihckContextAddDefaultKeybindings(guihckContext* ctx)
     guihckContextAddKeyBinding(ctx, b->code, b->name);
   }
 }
+

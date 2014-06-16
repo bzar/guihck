@@ -330,3 +330,9 @@ SCM guileKeyName(SCM keyCode)
   return keyName ? scm_from_utf8_string(keyName) : SCM_UNDEFINED;
 }
 
+
+
+guihckContext* guihckGuileGetCurrentThreadContext()
+{
+  return threadLocalContext.ctx;
+}
