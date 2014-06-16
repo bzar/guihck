@@ -249,7 +249,7 @@ guihckKey guihckContextGetKeyCode(guihckContext* ctx, const char* keyName)
   return result ? *result : GUIHCK_KEY_UNKNOWN;
 }
 
-void guihckContextKeyboardKey(guihckContext* ctx, guihckKey key, int scancode, guihckKeyAction action, guihckKeyMods mods)
+bool guihckContextKeyboardKey(guihckContext* ctx, guihckKey key, int scancode, guihckKeyAction action, guihckKeyMods mods)
 {
   guihckElementId id = ctx->focused;
 
@@ -301,10 +301,10 @@ void guihckContextKeyboardKey(guihckContext* ctx, guihckKey key, int scancode, g
 
     id = guihckElementGetParent(ctx, id);
   }
-
+  return handled;
 }
 
-void guihckContextKeyboardChar(guihckContext* ctx, unsigned int codepoint)
+bool guihckContextKeyboardChar(guihckContext* ctx, unsigned int codepoint)
 {
   guihckElementId id = ctx->focused;
   SCM codepointChar = scm_integer_to_char(scm_from_uint32(codepoint));
@@ -338,6 +338,7 @@ void guihckContextKeyboardChar(guihckContext* ctx, unsigned int codepoint)
 
     id = guihckElementGetParent(ctx, id);
   }
+  return handled;
 }
 
 void guihckContextTime(guihckContext* ctx, double time)

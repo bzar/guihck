@@ -5,7 +5,7 @@ static chckIterPool* queryMouseAreasContainingPoint(guihckContext* ctx, float x,
 static chckIterPool* queryMouseAreasIntersectingLine(guihckContext* ctx, float sx, float sy, float dx, float dy);
 static chckIterPool* sortMouseAreasByElementOrder(guihckContext* ctx, chckIterPool* mouseAreas);
 
-void guihckContextMouseDown(guihckContext* ctx, float x, float y, int button)
+bool guihckContextMouseDown(guihckContext* ctx, float x, float y, int button)
 {
   chckPoolIndex iter = 0;
   guihckMouseAreaId* mouseAreaId = NULL;
@@ -20,10 +20,11 @@ void guihckContextMouseDown(guihckContext* ctx, float x, float y, int button)
     }
   }
   free(mouseAreas);
+  return handled;
 }
 
 
-void guihckContextMouseUp(guihckContext* ctx, float x, float y, int button)
+bool guihckContextMouseUp(guihckContext* ctx, float x, float y, int button)
 {
   chckPoolIndex iter = 0;
   guihckMouseAreaId* mouseAreaId = NULL;
@@ -38,9 +39,10 @@ void guihckContextMouseUp(guihckContext* ctx, float x, float y, int button)
     }
   }
   free(mouseAreas);
+  return handled;
 }
 
-void guihckContextMouseMove(guihckContext* ctx, float sx, float sy, float dx, float dy)
+bool guihckContextMouseMove(guihckContext* ctx, float sx, float sy, float dx, float dy)
 {
   chckPoolIndex iter = 0;
   guihckMouseAreaId* mouseAreaId = NULL;
@@ -72,6 +74,7 @@ void guihckContextMouseMove(guihckContext* ctx, float sx, float sy, float dx, fl
     }
   }
   free(mouseAreas);
+  return handled;
 }
 
 

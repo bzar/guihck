@@ -59,9 +59,9 @@ void guihckContextFree(guihckContext* ctx);
 void guihckContextUpdate(guihckContext* ctx);
 void guihckContextRender(guihckContext* ctx);
 
-void guihckContextMouseDown(guihckContext* ctx, float x, float y, int button);
-void guihckContextMouseUp(guihckContext* ctx, float x, float y, int button);
-void guihckContextMouseMove(guihckContext* ctx, float sx, float sy, float dx, float dy);
+bool guihckContextMouseDown(guihckContext* ctx, float x, float y, int button);
+bool guihckContextMouseUp(guihckContext* ctx, float x, float y, int button);
+bool guihckContextMouseMove(guihckContext* ctx, float sx, float sy, float dx, float dy);
 
 void guihckContextKeyboardFocus(guihckContext* ctx, guihckElementId elementId);
 guihckElementId guihckContextGetKeyboardFocus(guihckContext* ctx);
@@ -70,8 +70,8 @@ void guihckContextAddKeyBinding(guihckContext* ctx, guihckKey keyCode, const cha
 const char* guihckContextGetKeyName(guihckContext* ctx, guihckKey keyCode);
 guihckKey guihckContextGetKeyCode(guihckContext* ctx, const char* keyName);
 
-void guihckContextKeyboardKey(guihckContext* ctx, guihckKey key, int scancode, guihckKeyAction action, guihckKeyMods mods);
-void guihckContextKeyboardChar(guihckContext* ctx, unsigned int codepoint);
+bool guihckContextKeyboardKey(guihckContext* ctx, guihckKey key, int scancode, guihckKeyAction action, guihckKeyMods mods);
+bool guihckContextKeyboardChar(guihckContext* ctx, unsigned int codepoint);
 
 void guihckContextTime(guihckContext* ctx, double time);
 double guihckContextGetTime(guihckContext* ctx);
