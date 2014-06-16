@@ -140,6 +140,13 @@ void guihckElementRemove(guihckContext* ctx, guihckElementId elementId)
   ctx->renderOrderChanged = true;
 }
 
+guihckElementId guihckElementFindById(guihckContext* ctx, const char* id)
+{
+  guihckStackPushElementById(ctx, id);
+  guihckElementId result = guihckStackGetElement(ctx);
+  guihckStackPopElement(ctx);
+  return result;
+}
 
 SCM guihckElementGetProperty(guihckContext* ctx, guihckElementId elementId, const char* key)
 {

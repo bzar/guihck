@@ -92,6 +92,8 @@ guihckElementTypeId guihckElementTypeAdd(guihckContext* ctx, const char* name, g
 guihckElementId guihckElementNew(guihckContext* ctx, guihckElementTypeId type, guihckElementId parentId);
 void guihckElementRemove(guihckContext* ctx, guihckElementId id);
 
+guihckElementId guihckElementFindById(guihckContext* ctx, const char* id);
+
 SCM guihckElementGetProperty(guihckContext* ctx, guihckElementId elementId, const char *key);
 void guihckElementProperty(guihckContext* ctx, guihckElementId elementId, const char* key, SCM value);
 
