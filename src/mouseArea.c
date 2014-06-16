@@ -171,9 +171,6 @@ chckIterPool* sortMouseAreasByElementOrder(guihckContext* ctx, chckIterPool* mou
   size_t n;
   guihckMouseAreaId* m = chckIterPoolToCArray(mouseAreas, &n);
 
-  if(n < 2)
-    return mouseAreas;
-
   int left = n;
 
   int i;
@@ -199,7 +196,7 @@ chckIterPool* sortMouseAreasByElementOrder(guihckContext* ctx, chckIterPool* mou
 
   for(i = 0; i < left; ++i)
   {
-    chckIterPoolRemove(mouseAreas, n - i);
+    chckIterPoolRemove(mouseAreas, n - i - 1);
   }
 
   return mouseAreas;
