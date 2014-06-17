@@ -14,13 +14,15 @@ static const char GUIHCK_MOUSEAREA_SCM[] =
     "  (create-element 'mouse-area (append default-args args)))";
 static const char GUIHCK_ROW_SCM[] =
     "(define (row-gen)"
+    "  (define (visible-children)"
+    "    (filter visible? (get-prop 'children)))"
     "  (define (align-width w)"
     "    (let ((x 0) (spacing (get-prop 'spacing)))"
     "      (for-each"
     "        (lambda (child)"
     "          (set-prop! child 'x x)"
     "          (set! x (+ x spacing (get-prop child 'width))))"
-    "        (get-prop 'children))"
+    "        (visible-children))"
     "      (set-prop! 'width (- x spacing))))"
 
     "  (define (align-height h) "
@@ -28,7 +30,7 @@ static const char GUIHCK_ROW_SCM[] =
     "      (apply max "
     "        (cons 0 (map "
     "          (lambda (c) (get-prop c 'height)) "
-    "          (get-prop 'children))))))"
+    "          (visible-children))))))"
 
     "  (define (update-bindings cs)"
     "    (let ((previous (get-prop 'listeners)))"
@@ -39,6 +41,7 @@ static const char GUIHCK_ROW_SCM[] =
     "    (flatmap"
     "      (lambda (c) "
     "        (list "
+    "          (bind c 'visible (lambda (v) (align-width 0) (align-height 0)))"
     "          (bind c 'width align-width)"
     "          (bind c 'height align-height)))"
     "      cs))"
@@ -57,13 +60,15 @@ static const char GUIHCK_ROW_SCM[] =
 
 static const char GUIHCK_COLUMN_SCM[] =
     "(define (column-gen)"
+    "  (define (visible-children)"
+    "    (filter visible? (get-prop 'children)))"
     "  (define (align-height h)"
     "    (let ((y 0) (spacing (get-prop 'spacing)))"
     "      (for-each"
     "        (lambda (child)"
     "          (set-prop! child 'y y)"
     "          (set! y (+ y spacing (get-prop child 'height))))"
-    "        (get-prop 'children))"
+    "        (visible-children))"
     "      (set-prop! 'height (- y spacing))))"
 
     "  (define (align-width w) "
@@ -71,7 +76,7 @@ static const char GUIHCK_COLUMN_SCM[] =
     "      (apply max "
     "        (cons 0 (map "
     "          (lambda (c) (get-prop c 'width)) "
-    "          (get-prop 'children))))))"
+    "          (visible-children))))))"
 
     "  (define (update-bindings cs)"
     "    (let ((previous (get-prop 'listeners)))"
@@ -82,6 +87,7 @@ static const char GUIHCK_COLUMN_SCM[] =
     "    (flatmap"
     "      (lambda (c) "
     "        (list "
+    "          (bind c 'visible (lambda (v) (align-width 0) (align-height 0)))"
     "          (bind c 'width align-width)"
     "          (bind c 'height align-height)))"
     "      cs))"

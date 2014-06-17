@@ -251,7 +251,7 @@ void initText(guihckContext* ctx, guihckElementId id, void* data)
   textThreadLocalContext.textRefs += 1;
 
   _guihckGlhckText* d = data;
-  d->font = glhckTextFontNewKakwafont(textThreadLocalContext.text, NULL);
+  d->font = getFont("");
   d->object = glhckPlaneNew(1.0, 1.0);
   glhckMaterial* m = glhckMaterialNew(NULL);
   glhckObjectMaterial(d->object, m);

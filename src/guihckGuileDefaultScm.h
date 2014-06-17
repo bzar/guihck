@@ -240,5 +240,8 @@ static const char GUIHCK_GUILE_DEFAULT_SCM[] =
     "  (arg-list (list"
     "    (prop 'width (bound '(parent width)))"
     "    (prop 'height (bound '(parent height))))))"
+
+    "(define (visible? element)"
+    "  (not (not (get-prop element 'visible))))" /* not-not changes undefined to true */
     ;
 #endif // GUIHCKGUILEDEFAULTSCM_H
