@@ -618,7 +618,7 @@ void _guihckPropertyCreateBind(guihckContext* ctx, guihckElementId elementId, co
     {
       hasUndefined = true;
     }
-    SCM param = scm_is_pair(b.value) ? scm_list_2(scm_sym_quote, b.value) : b.value;
+    SCM param = scm_is_true(scm_list_p(b.value)) ? scm_list_2(scm_sym_quote, b.value) : b.value;
     scm_c_vector_set_x(paramsVector, i,  param);
 
     chckIterPoolAdd(property->bind.bound, &b, NULL);

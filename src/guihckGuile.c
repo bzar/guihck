@@ -30,6 +30,7 @@ static SCM guilePushElement(SCM elementSymbol);
 static SCM guilePushElementById(SCM idSymbol);
 static SCM guilePushParentElement();
 static SCM guilePushChildElement(SCM childIndex);
+static SCM guileRemoveElement(SCM elementSymbol);
 static SCM guileSetElementProperty(SCM keySymbol, SCM value);
 static SCM guileAddPropertyListener(SCM element, SCM keySymbol, SCM callback);
 static SCM guileRemovePropertyListener(SCM listener);
@@ -119,6 +120,7 @@ void* initGuile(void* data)
   scm_c_define_gsubr("push-element-by-id!", 1, 0, 0, guilePushElementById);
   scm_c_define_gsubr("push-parent-element!", 0, 0, 0, guilePushParentElement);
   scm_c_define_gsubr("push-child-element!", 1, 0, 0, guilePushChildElement);
+  scm_c_define_gsubr("remove-element!", 1, 0, 0, guileRemoveElement);
   scm_c_define_gsubr("pop-element!", 0, 0, 0, guilePopElement);
   scm_c_define_gsubr("set-element-property!", 2, 0, 0, guileSetElementProperty);
   scm_c_define_gsubr("add-element-property-listener!", 3, 0, 0, guileAddPropertyListener);
@@ -214,6 +216,20 @@ SCM guilePushChildElement(SCM childIndex)
     return SCM_BOOL_T;
   }
   return SCM_BOOL_F;
+}
+
+SCM guileRemoveElement(SCM elementSymbol)
+{
+  if(scm_is_integer(elementSymbol))
+  {
+    guihckElementId id = scm_to_uint64(elementSymbol);
+    guihckElementRemove(threadLocalContext.ctx, id);
+    return SCM_BOOL_T;
+  }
+  else
+  {
+    return SCM_BOOL_F;
+  }
 }
 
 SCM guileSetElementProperty(SCM keySymbol, SCM value)

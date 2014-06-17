@@ -23,7 +23,7 @@ static const char GUIHCK_ROW_SCM[] =
     "          (set-prop! child 'x x)"
     "          (set! x (+ x spacing (get-prop child 'width))))"
     "        (visible-children))"
-    "      (set-prop! 'width (- x spacing))))"
+    "      (set-prop! 'width (max 0 (- x spacing)))))"
 
     "  (define (align-height h) "
     "    (set-prop! 'height"
@@ -69,7 +69,7 @@ static const char GUIHCK_COLUMN_SCM[] =
     "          (set-prop! child 'y y)"
     "          (set! y (+ y spacing (get-prop child 'height))))"
     "        (visible-children))"
-    "      (set-prop! 'height (- y spacing))))"
+    "      (set-prop! 'height (max 0 (- y spacing)))))"
 
     "  (define (align-width w) "
     "    (set-prop! 'width"
